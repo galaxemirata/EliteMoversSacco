@@ -4,25 +4,35 @@ import { useNavigate, useLocation } from 'react-router'
 const IsioloKaratina = () => {
   const navigate = useNavigate()
   const location = useLocation()
-
-  const [paidSeats, setPaidSeats] = useState(() => {
-  return JSON.parse(localStorage.getItem("paidSeats")) || []
-})
-
-useEffect(() => {
-  localStorage.setItem("paidSeats", JSON.stringify(paidSeats))
-}, [paidSeats])
-
+  
+  
+  
+ const routeKey = location.pathname
+ 
+ const [paidSeats, setPaidSeats] = useState(() => {
+   return JSON.parse(localStorage.getItem(`paidSeats:${routeKey}`)) || []
+  })
+  
+  useEffect(() => {
+    localStorage.setItem(`paidSeats:${routeKey}`, JSON.stringify(paidSeats))
+  }, [paidSeats])
+  
   // Receive paid seat from Mpesa page
   
-
+  
   const handleSeatClick = (seat) => {
-    navigate('/mpesa', { state: { seat } })
+    navigate('/mpesa', {
+      state: {
+        seat,
+        from: location.pathname
+      }
+    })
   }
-
+  
   return (
-    <div className='bg-dark row'>
-      <b className='btn bg-dark text-info'>KDX 234J</b>
+
+    <div className='bg-dark row justify-content-center'>
+      <b className='btn bg-info text-dark'>Isiolo-Karatina</b>
 
       <div className='col-md-6'>
 

@@ -1,5 +1,9 @@
 .App {
   text-align: center;
+  background: 
+    linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)),
+    url('/public/images/bgmatatu2.jpg') center/cover no-repeat;
+  min-height: 100vh;
 }
 
 .App-logo {
@@ -14,7 +18,7 @@
 }
 
 .App-header {
-  background-color:deepskyblue;
+  background-color: black;
   min-height: 10vh;
   display: flex;
   flex-direction: column;
@@ -23,6 +27,7 @@
   font-size: calc(10px + 2vmin);
   color: white;
   font-family: sans-serif;
+  
 }
 
 .App-link {
@@ -39,13 +44,18 @@
 }
 
 .navlink{
-  color: white;
   text-decoration: none;
-  
+  padding-left: 30px;
+  padding-right: 10px;
 }
 
 .navbar{
   text-align: end;
+  background-color: black;
+}
+
+.img{
+  padding-right: 10px;
 }
 
 
@@ -62,14 +72,63 @@
 }
 
 
-.navlink:hover{
-  color: black;
+.h1main{
+  margin-left: 120px;
 }
 
-#signupnav{
-  margin-right: 20px;
+.card{
+  background-color: black;
 }
 
-#signinnav{
-  margin-left: 20px;
+
+
+.h1main{
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+
+
+#signin{
+  background-color: black;
+}
+
+#signup{
+  background-color: black;
+}
+
+#signinhead{
+  color: aqua;
+}
+
+#h1main{
+  color: aqua;
+}
+
+#createaccount{
+  color: aqua;
+}
+
+#bookcard{
+  background-color: black;
+}
+
+#mpesacard{
+  background-color: black;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #printArea, #printArea * {
+    visibility: visible;
+  }
+
+  #printArea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
 }

@@ -1,4 +1,4 @@
-import logo from './logo.svg';
+
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
@@ -28,23 +28,36 @@ import NanyukiIsiolo from './components/NanyukiIsiolo';
 import NanyukiMombasa from './components/NanyukiMombasa';
 import NanyukiNairobi from './components/NanyukiNairobi';
 import Mpesa from './components/Mpesa';
+import { BiFontFamily } from 'react-icons/bi';
+import { PiShowerFill } from 'react-icons/pi';
 
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src="images/2nk_logo-removedbg.png" alt="" width={50}/>
-        <b>2NK ONLINE BOOKING PLATFORM</b>
-      </header>
+      
+        
       
 
       <Router>
 
-        <nav className='bg-primary navbar'>
-        <Link to="/signin" className='navlink' id='signinnav'>Sign In</Link>
-        <Link to="/" className='navlink' active>Book Now</Link>
-        <Link to="/signup"className='navlink' id='signupnav'>Sign Up</Link>
+        <nav className='navbar'>
+          
+
+        <Link to="/" className='text-info img'><img src="images/matatu-removedbg.png" alt="" width={100}/></Link> 
+        
+        <div className='justify-content-center h1main'>
+
+          <h1 style={{letterSpacing:10}} id='h1main'>ELITE MOVERS SACCO</h1>
+
+        </div>
+
+        <div className='justify-content-start'>
+        <Link to="/" className='text-white   btn btn-info  btn-outline-primary'>Book Now</Link>
+        <Link to="/signin" className='text-info navlink'>Sign In</Link>
+        <Link to="/signup" className='text-info navlink'>Sign Up</Link>
+        </div>
+
         </nav>
         <br />
         <br />

@@ -59,14 +59,14 @@ const SignUp = () => {
 
   return (
     <div className='row justify-content-center'>
-      <div className='col-md-6 card shadow p-4 bg-info'>
-        <h1><b>CREATE ACCOUNT</b></h1>
+      <div className='col-md-6 card shadow p-4' style={{borderRadius:50}} id='signup'>
+        <p><b id='createaccount'>CREATE ACCOUNT</b></p>
 
         <form onSubmit={submit}>
 
           {success && (
             <div className="alert alert-success d-flex align-items-center">
-              <span className="me-2">✅</span>
+              
               {success}
             </div>
           )}
@@ -76,6 +76,9 @@ const SignUp = () => {
               {error}
             </div>
           )}
+
+
+        
 
           <input
             type="text"
@@ -133,8 +136,9 @@ const SignUp = () => {
 
           <button
             type="submit"
-            className="btn bg-primary text-white w-100"
+            className="btn bg-info text-white w-100"
             disabled={loading}
+            style={{borderRadius:30}}
           >
             {loading ? (
               <>
@@ -143,7 +147,7 @@ const SignUp = () => {
               </>
             ) : success ? (
               <>
-                <span className="me-2">✅</span>
+                
                 Success
               </>
             ) : (
@@ -152,13 +156,18 @@ const SignUp = () => {
           </button>
 
           <br />
-          <p>
-            Already have an account? <Link to='/signin' className='text-white'><b>SignIn</b></Link>
-          </p>
+          
+          <p className='text-white'><b>Already have an account?</b></p><Link to='/signin'><b>SignIn</b></Link>
+          
 
         </form>
       </div>
+      <br />
+      <br />
+      
+
     </div>
+
   )
 }
 

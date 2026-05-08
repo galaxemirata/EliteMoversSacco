@@ -104,10 +104,12 @@ const Book = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1><b>BOOK WITH US</b></h1>
+    <div style={{ padding: "20px" }} className="row justify-content-center">
+      <div className="col-md-6 card shadow" style={{borderRadius:30}} id="bookcard">
+        
+      <p><b className="text-white">WELCOME, KINDLY SELECT YOUR DESTINATION</b></p>
       <br />
-      <br />
+      
       
 
       <form onSubmit={handleSubmit}>
@@ -141,8 +143,12 @@ const Book = () => {
 
         <br />
 
-        <button type="submit" className="btn bg-primary text-white">See Vehicle</button>
+        <button type="submit" className="btn bg-info text-white">See Vehicle</button>
+        
       </form>
+      
+    </div>
+    
     </div>
   );
 };

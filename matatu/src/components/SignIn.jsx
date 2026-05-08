@@ -35,6 +35,8 @@ const SignIn = () => {
         localStorage.setItem("user", JSON.stringify(response.data.user));
         setSuccess(response.data.message);
 
+        setError("")
+
         setTimeout(() => {
           navigate("/");
         }, 2000);
@@ -50,8 +52,8 @@ const SignIn = () => {
 
   return (
     <div className='row justify-content-center'>
-      <div className='col-md-6 card shadow p-4 bg-info'>
-        <h1><b>SignIn</b></h1>
+      <div className='col-md-6 card shadow p-4' style={{borderRadius:50}} id='signin'>
+        <p><b id='signinhead'>SignIn</b></p>
 
         <form onSubmit={submit}>
           <p className='text-warning'>{loading}</p>
@@ -97,16 +99,20 @@ const SignIn = () => {
           <input
             type="submit"
             value="Sign In"
-            className='form-control bg-primary text-white'
+            className='form-control bg-info text-white'
+            style={{borderRadius:30}}
           />
 
           <br />
 
-          <p>
-            Don't have an account? <Link to='/signup' className='text-white'><b>SignUp</b></Link>
-          </p>
+          
+           <p className='text-white'><b>Don't have an account?</b></p> <Link to='/signup' className='text-primary'><b>SignUp</b></Link>
+          
         </form>
       </div>
+      <br />
+      <br />
+      
     </div>
   )
 }

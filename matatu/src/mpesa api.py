@@ -1,97 +1,3 @@
-# importing flask
-from flask import *
-import pymysql
-import os
-from flask_cors import CORS
-
-import json
-
-# initialize app
-app = Flask(__name__)
-CORS(app)
-
-
-# ==============================
-# SIGNUP API
-# ==============================
-@app.route("/api/signup", methods=["POST"])
-def signup():
-
-    username = request.form["username"]
-    email = request.form["email"]
-    password = request.form["password"]
-    phone = request.form["phone"]
-
-    connection = pymysql.connect(
-        user="root",
-        host="localhost",
-        password="",
-        database="matatu"
-    )
-
-    cursor = connection.cursor()
-
-    sql = """
-    INSERT INTO signup(username,password,email,phone)
-    VALUES(%s,%s,%s,%s)
-    """
-
-    cursor.execute(sql, (username, password, email, phone))
-    connection.commit()
-
-    return jsonify({"message": "Thankyou for joining"})
-
-
-# ==============================
-# SIGNIN API
-# ==============================
-@app.route("/api/signin", methods=["POST"])
-def signin():
-
-    data = request.form
-
-    email = data.get("email")
-    password = data.get("password")
-
-    connection = pymysql.connect(
-        user="root",
-        host="localhost",
-        password="",
-        database="matatu"
-    )
-
-    cursor = connection.cursor(pymysql.cursors.DictCursor)
-
-    sql = "SELECT * FROM signup WHERE email=%s AND password=%s"
-
-    cursor.execute(sql, (email, password))
-
-    if cursor.rowcount == 0:
-        return jsonify({"message": "login failed"})
-    else:
-        return jsonify({
-            "message": "login successful",
-            "user": cursor.fetchone()
-        })
-
-
-
-
-import requests
-import datetime
-import base64
-from requests.auth import HTTPBasicAuth
-import traceback
-
-def get_db():
-    return pymysql.connect(
-        user="root",
-        host="localhost",
-        password="",
-        database="matatu",
-        cursorclass=pymysql.cursors.DictCursor
-    )
-
 import requests
 import datetime
 import base64
@@ -136,7 +42,7 @@ def mpesa_payment():
         "Password":password,
         "Timestamp": timestamp,
         "TransactionType": "CustomerPayBillOnline",
-        "Amount":amount, # use 1 when testing
+        "Amount": '1', # use 1 when testing
         "PartyA": phone, # change to your number
         "PartyB": "174379",
         "PhoneNumber": phone,
@@ -156,34 +62,7 @@ def mpesa_payment():
         # Create a POST Request to above url, providing headers, payload
         # Below triggers an STK Push to the phone number indicated in the payload and the amount.
         response = requests.post(url, json=payload, headers=headers)
+        print(response.text) #
+        # Give a Response
+        return jsonify({"message": "An MPESA Prompt has been sent to Your Phone, Please Check & Complete Payment"})
 
-        response_data = response.json()
-
-        print(response_data)
-
-        checkout_id = response_data.get("CheckoutRequestID")
-
-        return jsonify({
-        "message": "Kindly check your phone to complete payment.",
-        "checkout_id": checkout_id
-        })
-
-
-    
-
-@app.route('/api/mpesa_cancel', methods=['POST'])
-def mpesa_cancel():
-
-    data = request.get_json()
-
-    checkout_id = data.get("checkout_id")
-
-    print("CANCELLED:", checkout_id)
-
-    return jsonify({
-        "message": "Payment stopped successfully"
-    })
-
-# RUN APP
-
-app.run(debug=True)
