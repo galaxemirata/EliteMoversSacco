@@ -30,9 +30,17 @@ import NanyukiNairobi from './components/NanyukiNairobi';
 import Mpesa from './components/Mpesa';
 import { BiFontFamily } from 'react-icons/bi';
 import { PiShowerFill } from 'react-icons/pi';
+import AdminDashboard from './components/AdminDashboard';
+import ChatBot from './components/ChatBot';
+import About from './components/About';
+import AdminSignIn from './components/AdminSignIn';
+import Vehicles from './components/Vehicles';
+import SeatLayout from './components/SeatLayout';
+
 
 
 function App() {
+  const admin = localStorage.getItem("admin");
   return (
     <div className="App">
       
@@ -44,7 +52,17 @@ function App() {
         <nav className='navbar'>
           
 
-        <Link to="/" className='text-info img'><img src="images/matatu-removedbg.png" alt="" width={100}/></Link> 
+      <div className='d-flex align-items-center gap-3'>
+
+       <Link to="/" className='text-info img'><img src="images/matatu-removedbg.png" alt="" width={100}/></Link>
+    
+  
+
+        <ChatBot />
+
+      </div> 
+
+        
         
         <div className='justify-content-center h1main'>
 
@@ -55,7 +73,9 @@ function App() {
         <div className='justify-content-start'>
         <Link to="/" className='text-white   btn btn-info  btn-outline-primary'>Book Now</Link>
         <Link to="/signin" className='text-info navlink'>Sign In</Link>
-        <Link to="/signup" className='text-info navlink'>Sign Up</Link>
+        <Link to="/about" className='text-info navlink'>About</Link>
+    
+  
         </div>
 
         </nav>
@@ -64,11 +84,15 @@ function App() {
         
         
         
+        
+        
+        
         <Routes>
 
           
           <Route path='/signin' element={<SignIn/>}/>
           <Route path='/' element={<Book/>}/>
+          <Route path='/about' element={<About/>}/>
           <Route path='/signup' element={<SignUp/>}/>
           <Route path='/mpesa' element={<Mpesa/>}/>
           <Route path='/nairobi-karatina' element={<NairobiKaratina/>}/>
@@ -91,6 +115,21 @@ function App() {
           <Route path='/nanyuki-karatina' element={<NanyukiKaratina/>}/>
           <Route path='/nanyuki-nairobi' element={<NanyukiNairobi/>}/>
           <Route path='/nanyuki-mombasa' element={<NanyukiMombasa/>}/>
+          <Route path="/adminsignin" element={<AdminSignIn />} />
+          
+          
+
+<Route
+  path="/admin"
+  element={
+    admin ? <AdminDashboard /> : <AdminSignIn />
+  }
+/>
+
+  
+  
+   
+  
           
 
 

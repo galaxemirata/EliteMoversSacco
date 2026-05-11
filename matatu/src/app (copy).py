@@ -97,79 +97,128 @@ import datetime
 import base64
 from requests.auth import HTTPBasicAuth
 
+import requests
+import datetime
+import base64
+from requests.auth import HTTPBasicAuth
+
 @app.route('/api/mpesa_payment', methods=['POST'])
 def mpesa_payment():
     if request.method == 'POST':
-    # Extract POST Values sent
-        data = request.get_json()
-        amount = data.get('amount')    
-        phone = data.get('phone')
 
-        # Provide consumer_key and consumer_secret provided by safaricom
+        # Extract POST values
+        data = request.get_json()
+
+        phone = data.get('phone')
+        amount = data.get('amount')
+        seat = data.get('seat')
+        route_name = data.get('route')
+        vehicle = data.get('vehicle')
+        pickup = data.get('pickup_location')
+
+        # ================= MPESA PAYMENT =================
+
+        # Safaricom credentials
         consumer_key = "GTWADFxIpUfDoNikNGqq1C3023evM6UH"
         consumer_secret = "amFbAoUByPV2rM5A"
 
-        # Authenticate Yourself using above credentials to Safaricom Services, and Bearer Token this is used by safaricom for security identification purposes - Your are given Access
-        api_URL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials" # AUTH URL
-        # Provide your consumer_key and consumer_secret
-        response = requests.get(api_URL, auth=HTTPBasicAuth(consumer_key, consumer_secret))
-        # Get response as Dictionary
-        data = response.json()
-        # Retrieve the Provide Token
-        # Token allows you to proceed with the transaction
-        access_token = "Bearer" + ' ' + data['access_token']
+        # Authentication URL
+        api_URL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
 
-        # GETTING THE PASSWORD
-        timestamp = datetime.datetime.today().strftime('%Y%m%d%H%M%S') # Current Time
-        passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919' # Passkey(Safaricom Provided)
-        business_short_code = "174379" # Test Paybile (Safaricom Provided)
-        # Combine above 3 Strings to get data variable
-        data = business_short_code + passkey + timestamp
-        # Encode to Base64
-        encoded = base64.b64encode(data.encode())
-        password = encoded.decode()
-        
+        # Generate access token
+        response = requests.get(
+            api_URL,
+            auth=HTTPBasicAuth(consumer_key, consumer_secret)
+        )
 
-        # BODY OR PAYLOAD
+        access_token = "Bearer " + response.json()['access_token']
+
+        # Generate password
+        timestamp = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
+        passkey = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+        business_short_code = "174379"
+
+        password_data = business_short_code + passkey + timestamp
+        password = base64.b64encode(password_data.encode()).decode()
+
+        # STK Push payload
         payload = {
-        "BusinessShortCode": "174379",
-        "Password":password,
-        "Timestamp": timestamp,
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount":amount, # use 1 when testing
-        "PartyA": phone, # change to your number
-        "PartyB": "174379",
-        "PhoneNumber": phone,
-        "CallBackURL": "https://coding.co.ke/api/confirm.php",
-        "AccountReference": " chui SokoGarden Online",
-        "TransactionDesc": "Payments for Products"
+            "BusinessShortCode": business_short_code,
+            "Password": password,
+            "Timestamp": timestamp,
+            "TransactionType": "CustomerPayBillOnline",
+            "Amount": amount,   # use 1 when testing
+            "PartyA": phone,
+            "PartyB": business_short_code,
+            "PhoneNumber": phone,
+            "CallBackURL": "https://coding.co.ke/api/confirm.php",
+            "AccountReference": "chui SokoGarden Online",
+            "TransactionDesc": "Payments for Products"
         }
 
-        # POPULAING THE HTTP HEADER, PROVIDE THE TOKEN ISSUED EARLIER
+        # Headers
         headers = {
-        "Authorization": access_token,
-        "Content-Type": "application/json"
+            "Authorization": access_token,
+            "Content-Type": "application/json"
         }
 
-        # Specify STK Push Trigger URL
+        # STK Push URL
         url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-        # Create a POST Request to above url, providing headers, payload
-        # Below triggers an STK Push to the phone number indicated in the payload and the amount.
-        response = requests.post(url, json=payload, headers=headers)
 
-        response_data = response.json()
+        # Send STK Push
+        stk_response = requests.post(
+            url,
+            json=payload,
+            headers=headers
+        )
 
-        print(response_data)
+        print(stk_response.text)
 
-        checkout_id = response_data.get("CheckoutRequestID")
+        # ================= SAVE BOOKING =================
 
-        return jsonify({
-        "message": "Kindly check your phone to complete payment.",
-        "checkout_id": checkout_id
-        })
+        try:
+            connection = pymysql.connect(
+                host="localhost",
+                user="root",
+                password="",
+                database="matatu"
+            )
 
+            cursor = connection.cursor()
 
-    
+            cursor.execute("""
+                INSERT INTO bookings(
+                    number_plate,
+                    seat_number,
+                    phone,
+                    amount,
+                    pickup_location,
+                    status
+                )
+                VALUES(%s,%s,%s,%s,%s,%s)
+            """, (
+                vehicle,
+                seat,
+                phone,
+                amount,
+                pickup,
+                "Paid"
+            ))
+
+            connection.commit()
+
+            cursor.close()
+            connection.close()
+
+            return jsonify({
+                "message": "An MPESA Prompt has been sent to Your Phone, Please Check & Complete Payment"
+            })
+
+        except Exception as e:
+            return jsonify({
+                "error": str(e)
+            }), 500
+
 
 @app.route('/api/mpesa_cancel', methods=['POST'])
 def mpesa_cancel():
@@ -183,6 +232,239 @@ def mpesa_cancel():
     return jsonify({
         "message": "Payment stopped successfully"
     })
+
+@app.route('/api/admin/vehicle_status/<int:vehicle_id>')
+def vehicle_status(vehicle_id):
+
+    connection = pymysql.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="matatu"
+    )
+
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # total seats
+    cursor.execute("""
+        SELECT total_seats, number_plate
+        FROM vehicles
+        WHERE id=%s
+    """, (vehicle_id,))
+
+    vehicle = cursor.fetchone()
+
+    # booked seats
+    cursor.execute("""
+        SELECT COUNT(*) as booked
+        FROM bookings
+        WHERE vehicle_id=%s
+    """, (vehicle_id,))
+
+    booked = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    total = vehicle['total_seats']
+    booked_count = booked['booked']
+
+    return jsonify({
+        "vehicle": vehicle['number_plate'],
+        "total_seats": total,
+        "booked_seats": booked_count,
+        "is_full": booked_count >= total
+    })
+
+@app.route('/api/admin/add_vehicle', methods=['POST'])
+def add_vehicle():
+
+    data = request.get_json()
+
+    number_plate = data.get('number_plate')
+    route_name = data.get('route_name')
+    total_seats = data.get('total_seats')
+    price = data.get('price')   # 👈 ADD THIS
+
+    connection = pymysql.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="matatu"
+    )
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO vehicles(
+            number_plate,
+            route_name,
+            total_seats,
+            price
+        )
+        VALUES(%s,%s,%s,%s)
+    """, (number_plate, route_name, total_seats, price))
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({"message": "Vehicle added successfully"})
+
+@app.route('/api/vehicles')
+def vehicles():
+
+    connection = pymysql.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="matatu"
+    )
+
+    cursor = connection.cursor(
+        pymysql.cursors.DictCursor
+    )
+
+    cursor.execute("""
+        SELECT * FROM vehicles
+        WHERE status='ACTIVE'
+    """)
+
+    vehicles = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(vehicles)
+
+@app.route('/api/booked_seats/<int:vehicle_id>')
+def booked_seats(vehicle_id):
+
+    connection = pymysql.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="matatu"
+    )
+
+    cursor = connection.cursor(
+        pymysql.cursors.DictCursor
+    )
+
+    cursor.execute("""
+        SELECT seat_number
+        FROM bookings
+        WHERE vehicle_id=%s
+    """, (vehicle_id,))
+
+    rows = cursor.fetchall()
+
+    seats = [
+        row['seat_number']
+        for row in rows
+    ]
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(seats)
+
+@app.route("/api/adminsignin", methods=["POST"])
+def adminsignin():
+
+    data = request.form
+
+    email = data.get("email")
+    password = data.get("password")
+
+    connection = pymysql.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="matatu"
+    )
+
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    sql = """
+        SELECT * FROM admins
+        WHERE email=%s AND password=%s
+    """
+
+    cursor.execute(sql, (email, password))
+
+    admin = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if admin:
+
+        return jsonify({
+            "success": True,
+            "admin": admin
+        })
+
+    else:
+
+        return jsonify({
+            "success": False,
+            "message": "Invalid admin credentials"
+        })
+    
+@app.route('/api/admin/remove_vehicle/<int:vehicle_id>', methods=['DELETE'])
+def remove_vehicle(vehicle_id):
+
+    try:
+
+        connection = pymysql.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="matatu"
+        )
+
+        cursor = connection.cursor()
+
+        # OPTIONAL: check if vehicle exists first
+        cursor.execute(
+            "SELECT id FROM vehicles WHERE id=%s",
+            (vehicle_id,)
+        )
+
+        vehicle = cursor.fetchone()
+
+        if not vehicle:
+            return jsonify({
+                "success": False,
+                "message": "Vehicle not found"
+            }), 404
+
+        # DELETE VEHICLE
+        cursor.execute(
+            "DELETE FROM vehicles WHERE id=%s",
+            (vehicle_id,)
+        )
+
+        connection.commit()
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Vehicle removed successfully"
+        })
+
+    except Exception as e:
+
+        print("DELETE ERROR:", str(e))
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
 
 # RUN APP
 

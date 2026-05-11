@@ -14,20 +14,59 @@ const SignUp = () => {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
 
+  // PASSWORD STRENGTH
+  const [strength, setStrength] = useState("")
+  const [strengthColor, setStrengthColor] = useState("")
+
   // ui states
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")
 
+  // PASSWORD CHECKER
+  const checkPasswordStrength = (value) => {
+
+    setPassword(value)
+
+    if (value.length < 6) {
+
+      setStrength("Weak Password")
+      setStrengthColor("red")
+
+    } else if (
+      value.match(/[A-Z]/) &&
+      value.match(/[0-9]/) &&
+      value.match(/[@$!%*?&]/) &&
+      value.length >= 8
+    ) {
+
+      setStrength("Strong Password")
+      setStrengthColor("green")
+
+    } else {
+
+      setStrength("Medium Password")
+      setStrengthColor("orange")
+    }
+  }
+
   const submit = async (e) => {
     e.preventDefault()
+
+    // BLOCK WEAK PASSWORD
+    if (strength === "Weak Password") {
+      setError("Please use a stronger password")
+      return
+    }
 
     setLoading(true)
     setSuccess("")
     setError("")
 
     try {
+
       const data = new FormData()
+
       data.append("username", username)
       data.append("email", email)
       data.append("password", password)
@@ -45,28 +84,40 @@ const SignUp = () => {
       setEmail("")
       setPassword("")
       setPhone("")
+      setStrength("")
 
       setTimeout(() => {
-        navigate("/booking")
+        navigate("/signin")
       }, 1500)
 
     } catch (error) {
+
       setError(error.message)
+
     } finally {
+
       setLoading(false)
     }
   }
 
   return (
+
     <div className='row justify-content-center'>
-      <div className='col-md-6 card shadow p-4' style={{borderRadius:50}} id='signup'>
-        <p><b id='createaccount'>CREATE ACCOUNT</b></p>
+
+      <div
+        className='col-md-6 card shadow p-4'
+        style={{ borderRadius: 50 }}
+        id='signup'
+      >
+
+        <p>
+          <b id='createaccount'>CREATE ACCOUNT</b>
+        </p>
 
         <form onSubmit={submit}>
 
           {success && (
-            <div className="alert alert-success d-flex align-items-center">
-              
+            <div className="alert alert-success">
               {success}
             </div>
           )}
@@ -77,9 +128,6 @@ const SignUp = () => {
             </div>
           )}
 
-
-        
-
           <input
             type="text"
             placeholder='Enter your username'
@@ -87,6 +135,7 @@ const SignUp = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
+
           <br />
 
           <input
@@ -96,15 +145,20 @@ const SignUp = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+
           <br />
-          {/* Password with eye toggle */}
+
+          {/* PASSWORD */}
           <div style={{ position: "relative" }}>
+
             <input
               type={showPassword ? "text" : "password"}
               placeholder='Enter your password'
               className='form-control'
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                checkPasswordStrength(e.target.value)
+              }
             />
 
             <span
@@ -119,7 +173,24 @@ const SignUp = () => {
             >
               {showPassword ? <FaEye /> : <FaEyeSlash />}
             </span>
+
           </div>
+
+          {/* PASSWORD STRENGTH */}
+          {
+            password && (
+              <small
+                style={{
+                  color: strengthColor,
+                  fontWeight: "bold"
+                }}
+              >
+                {strength}
+              </small>
+            )
+          }
+
+          <br />
           <br />
 
           <input
@@ -129,8 +200,6 @@ const SignUp = () => {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
-          <br />
-
 
           <br />
 
@@ -138,36 +207,38 @@ const SignUp = () => {
             type="submit"
             className="btn bg-info text-white w-100"
             disabled={loading}
-            style={{borderRadius:30}}
+            style={{ borderRadius: 30 }}
           >
+
             {loading ? (
               <>
                 <span className="spinner-border spinner-border-sm me-2"></span>
                 Signing Up...
               </>
             ) : success ? (
-              <>
-                
-                Success
-              </>
+              "Success"
             ) : (
               "SignUp"
             )}
+
           </button>
 
           <br />
-          
-          <p className='text-white'><b>Already have an account?</b></p><Link to='/signin'><b>SignIn</b></Link>
-          
+          <br />
+
+          <p className='text-white'>
+            <b>Already have an account?</b>
+          </p>
+
+          <Link to='/signin'>
+            <b>SignIn</b>
+          </Link>
 
         </form>
+
       </div>
-      <br />
-      <br />
-      
 
     </div>
-
   )
 }
 

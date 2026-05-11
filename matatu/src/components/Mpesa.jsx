@@ -1,180 +1,166 @@
-import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Mpesa = () => {
 
-  const location = useLocation()
-  const navigate = useNavigate()
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const seat = location.state?.seat
-  const from = location.state?.from || '/'
+  const seat = location.state?.seat;
+  const from = location.state?.from;
+  const vehicle = location.state?.vehicle;
 
-  const routeAmounts = {
-    "/isiolo-karatina": 500,
-    "/isiolo-mombasa": 1200,
-    "/isiolo-nairobi": 1000,
-    "/isiolo-nanyuki": 800,
-    "/karatina-isiolo": 700,
-    "/karatina-mombasa": 1500,
-    "/karatina-nairobi": 400,
-    "/karatina-nanyuki": 300,
-    "/mombasa-isiolo": 1200,
-    "/mombasa-karatina": 1500,
-    "/mombasa-nairobi": 900,
-    "/mombasa-nanyuki": 1300,
-    "/nairobi-isiolo": 1000,
-    "/nairobi-karatina": 400,
-    "/nairobi-mombasa": 900,
-    "/nairobi-nanyuki": 700,
-    "/nanyuki-isiolo": 800,
-    "/nanyuki-karatina": 300,
-    "/nanyuki-mombasa": 1300,
-    "/nanyuki-nairobi": 700,
-  }
+  const routeName = from?.replace("/", "");
 
-  const [phone, setPhone] = useState('')
-  const [amount, setAmount] = useState('')
-  const [pickup, setPickup] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [checkoutId, setCheckoutId] = useState(null)
+  const routeKey = `${from}:${vehicle}`;
 
-  useEffect(() => {
-    if (routeAmounts[from]) {
-      setAmount(routeAmounts[from])
-    }
-  }, [from])
+  const [phone, setPhone] = useState("");
+  const [amount, setAmount] = useState("");
+  const [pickup, setPickup] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // =========================
-  // PAY FUNCTION
+  // GET PRICE FROM BACKEND VEHICLE DATA
+  // =========================
+  useEffect(() => {
+
+    if (!vehicle) return;
+
+    fetch("http://localhost:5000/api/vehicles")
+      .then(res => res.json())
+      .then(data => {
+
+        const found = data.find(
+          v => v.number_plate === vehicle
+        );
+
+        if (found?.price) {
+          setAmount(found.price);
+        } else {
+          setAmount("");
+        }
+
+      })
+      .catch(err => console.log(err));
+
+  }, [vehicle]);
+
+  // =========================
+  // SEAT SYNC EVENT
+  // =========================
+  const syncSeats = () => {
+    window.dispatchEvent(new Event("seat-sync"));
+  };
+
+  // =========================
+  // PAYMENT LOGIC
   // =========================
   const handlePayment = async () => {
-    console.log("CHECKOUT ID:", checkoutId)
 
-  if (!phone || !amount) {
-    alert("Fill all fields")
-    return
-  }
-
-  if (!/^2547\d{8}$/.test(phone)) {
-    alert("Use format 2547XXXXXXXX")
-    return
-  }
-
-  try {
-
-    setLoading(true)
-
-    const response = await fetch("http://localhost:5000/api/mpesa_payment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        phone,
-        amount: Number(amount),
-        seat,
-        route: from,
-        pickup_location: pickup
-      })
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      alert(data.error || "Payment failed")
-      return
+    if (!phone || !amount) {
+    alert("Fill all fields");
+    return;
     }
 
-    alert(data.message)
+    // Must start with 254 and contain 12 digits total
+    const phoneRegex = /^254\d{9}$/;
 
-    // IMPORTANT
-    setCheckoutId(data.checkout_id)
-
-    // save seat locally
-    const key = `paidSeats:${from}`
-    const existing = JSON.parse(localStorage.getItem(key)) || []
-
-    if (seat && !existing.includes(seat)) {
-      localStorage.setItem(key, JSON.stringify([...existing, seat]))
+    if (!phoneRegex.test(phone)) {
+    alert("Phone number must start with 254 and be valid");
+    return;
     }
 
-    // ❌ REMOVE NAVIGATION FROM HERE
+    setLoading(true);
 
-  } catch (err) {
+    try {
 
-    console.log("ERROR:", err)
-    alert("Payment unsuccessful...Kindly connect to a network")
+      const res = await fetch(
+        "http://localhost:5000/api/mpesa_payment",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            phone,
+            amount,
+            seat,
+            route: routeName,
+            vehicle,
+            pickup_location: pickup
+          })
+        }
+      );
 
-  } finally {
+      const data = await res.json();
 
-    setLoading(false)
+      if (!res.ok) {
+        alert(data.error || "Payment failed");
+        return;
+      }
 
-  }
-}
+      // =========================
+      // SAVE SEAT
+      // =========================
+      const existing =
+        JSON.parse(localStorage.getItem(`paidSeats:${routeKey}`)) || [];
 
+      if (!existing.includes(seat)) {
 
-  // =========================
-  // CANCEL FUNCTION (FIXED)
-  // =========================
-  const handleCancel = async () => {
+        localStorage.setItem(
+          `paidSeats:${routeKey}`,
+          JSON.stringify([...existing, seat])
+        );
+      }
 
-  if (!checkoutId) {
-    alert("No active payment")
-    return
-  }
+      syncSeats();
 
-  try {
+      alert("Thankyou...kindly check your phone to complete payment");
 
-    const res = await fetch("http://localhost:5000/api/mpesa_cancel", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        checkout_id: checkoutId
-      })
-    })
+      navigate(from);
 
-    const data = await res.json()
+    } catch (err) {
 
-    alert(data.message)
+      console.log(err);
+      alert("Payment error..check your internet connection");
 
-    // reset checkout
-    setCheckoutId(null)
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // remove seat from localStorage
-    const key = `paidSeats:${from}`
-    const existing = JSON.parse(localStorage.getItem(key)) || []
-
-    const updated = existing.filter(s => s !== seat)
-
-    localStorage.setItem(key, JSON.stringify(updated))
-
-    // navigate back to route page
-    navigate(from)
-
-  } catch (err) {
-    console.log(err)
-    alert("Cancel failed")
-  }
-}
   return (
-    <div className='row justify-content-center'>
 
-      <div className="text-light p-4 card shadow col-md-6"
+    <div className="row justify-content-center">
+
+      <div
+        className="text-light p-4 card shadow col-md-6"
         style={{ borderRadius: 50 }}
-        id='mpesacard'>
+        id="mpesacard"
+      >
 
         <p className="text-white">
-          M-Pesa Payment <b className='text-info'>{from}</b>
+          M-Pesa Payment{" "}
+          <b className="text-info">
+            {from}
+          </b>
         </p>
 
+        {/* VEHICLE */}
+        <input
+          value={vehicle || "KDA 123A"}
+          className="text-dark form-control mb-3"
+          readOnly
+        />
+
+        {/* SEAT */}
         {seat && (
           <p className="text-warning">
             You selected seat {seat}
           </p>
         )}
 
+        {/* PHONE */}
         <input
           type="text"
           placeholder="Enter Phone (2547XXXXXXXX)"
@@ -183,7 +169,11 @@ const Mpesa = () => {
           onChange={(e) => setPhone(e.target.value)}
         />
 
-        Amount is filled automatically
+        <p className="text-light">
+          Amount is filled automatically
+        </p>
+
+        {/* AMOUNT (READ ONLY) */}
         <input
           type="number"
           className="form-control mb-3"
@@ -191,53 +181,37 @@ const Mpesa = () => {
           readOnly
         />
 
+        {/* PICKUP */}
         <p>Kindly specify where you are standing</p>
-
         <textarea
-          className='form-control mb-3'
+          className="form-control mb-3"
           value={pickup}
           onChange={(e) => setPickup(e.target.value)}
-        ></textarea>
+        />
 
-        {/* PAY BUTTON */}
+        {/* PAY */}
         <button
           className="btn btn-info form-control"
           onClick={handlePayment}
           disabled={loading}
           style={{ borderRadius: 50 }}
         >
-          {loading ? (
-            <span className="spinner-border spinner-border-sm"></span>
-          ) : (
-            "PAY"
-          )}
+          {loading ? "Processing..." : "PAY"}
         </button>
 
-
-        {/* BACK BUTTON */}
+        {/* BACK */}
         <button
-        className="btn btn-secondary form-control mt-2"
-        onClick={() => navigate(from)}
-        style={{ borderRadius: 50 }}
+          className="btn btn-secondary form-control mt-2"
+          onClick={() => navigate(from)}
+          style={{ borderRadius: 50 }}
         >
-        <b>BACK</b>
+          <b>BACK</b>
         </button>
-
-        {/* CANCEL BUTTON */}
-        {checkoutId && (
-          <button
-            className="btn btn-danger form-control mt-2"
-            onClick={handleCancel}
-            style={{ borderRadius: 50 }}
-          >
-            Stop Payment
-          </button>
-        )}
 
       </div>
 
     </div>
-  )
-}
+  );
+};
 
-export default Mpesa
+export default Mpesa;
