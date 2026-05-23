@@ -34,6 +34,7 @@ const KaratinaIsiolo = () => {
   ];
 
   const totalSeats = seatRows.flat().filter((s) => s !== "aisle").length;
+  const remainingSeats = totalSeats - paidSeats.length;
 
   const routeKey = vehicle
     ? `${location.pathname}:${vehicle.number_plate}`
@@ -102,7 +103,7 @@ const KaratinaIsiolo = () => {
       height: "55px",
       borderRadius: "14px",
       background: isPaid
-        ? "red"
+        ? "grey"
         : isSelected
         ? "limegreen"
         : "#00bfff",
@@ -131,6 +132,10 @@ const KaratinaIsiolo = () => {
           <b>{vehicle?.number_plate || "Vehicle being uploaded..."}</b>
         </p>
 
+        <p className="text-dark fw-bold">
+          <b>{remainingSeats} Seats Remaining</b>
+        </p>
+
         <div
           className="p-4 mt-3"
           style={{
@@ -140,9 +145,7 @@ const KaratinaIsiolo = () => {
             width: "350px",
           }}
         >
-          {/* FRONT */}
           <div className="d-flex justify-content-center align-items-center mb-4">
-
             <div onClick={() => handleSeatSelection("s0")} style={seatStyle("s0")}>
               0
             </div>
@@ -159,7 +162,7 @@ const KaratinaIsiolo = () => {
                 height: "55px",
                 borderRadius: "14px",
                 background: "#444",
-                color: "white",
+                color: "blue",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -169,10 +172,8 @@ const KaratinaIsiolo = () => {
             >
               D
             </div>
-
           </div>
 
-          {/* SEATS */}
           {seatRows.slice(1).map((row, rowIndex) => (
             <div
               key={rowIndex}
@@ -213,20 +214,40 @@ const KaratinaIsiolo = () => {
           ))}
         </div>
 
-        {/* LEGEND */}
         <div className="d-flex gap-4 mt-4 flex-wrap text-white">
           <div className="d-flex align-items-center gap-2">
-            <div style={{ width: 20, height: 20, background: "#00bfff", borderRadius: 4 }} />
+            <div
+              style={{
+                width: 20,
+                height: 20,
+                background: "#00bfff",
+                borderRadius: 4,
+              }}
+            />
             Available
           </div>
 
           <div className="d-flex align-items-center gap-2">
-            <div style={{ width: 20, height: 20, background: "limegreen", borderRadius: 4 }} />
+            <div
+              style={{
+                width: 20,
+                height: 20,
+                background: "limegreen",
+                borderRadius: 4,
+              }}
+            />
             Selected
           </div>
 
           <div className="d-flex align-items-center gap-2">
-            <div style={{ width: 20, height: 20, background: "red", borderRadius: 4 }} />
+            <div
+              style={{
+                width: 20,
+                height: 20,
+                background: "grey",
+                borderRadius: 4,
+              }}
+            />
             Booked
           </div>
         </div>

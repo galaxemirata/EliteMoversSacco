@@ -8,7 +8,7 @@ const Mpesa = () => {
   const from = location.state?.from;
   const vehicle = location.state?.vehicle;
 
-  const seats = location.state?.seats || [];
+ const seats = location.state?.seats || []; 
   const seatCount = seats.length;
 
   const routeKey = `${from}:${vehicle}`;
