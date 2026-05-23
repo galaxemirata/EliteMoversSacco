@@ -1,135 +1,245 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router'
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router";
 
 const IsioloMombasa = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [vehicles, setVehicles] = useState([]);
+  const [vehicleIndex, setVehicleIndex] = useState(0);
+  const [paidSeats, setPaidSeats] = useState([]);
+  const [selectedSeats, setSelectedSeats] = useState([]);
 
-  const [vehicles, setVehicles] = useState([])
-  const [vehicleIndex, setVehicleIndex] = useState(0)
-  const [paidSeats, setPaidSeats] = useState([])
-
-  // FETCH ONLY MOMBASA VEHICLES
   useEffect(() => {
-
     fetch("http://localhost:5000/api/vehicles")
-      .then(res => res.json())
-      .then(data => {
-
+      .then((res) => res.json())
+      .then((data) => {
         const filtered = data.filter(
-          v => v.route_name === "isiolo-mombasa"
-        )
-
-        setVehicles(filtered)
+          (v) => v.route_name === "isiolo-karatina"
+        );
+        setVehicles(filtered);
       })
-      .catch(err => console.log(err))
+      .catch((err) => console.log(err));
+  }, []);
 
-  }, [])
-
-  const vehicle = vehicles[vehicleIndex] || null
+  const vehicle = vehicles[vehicleIndex] || null;
 
   const seatRows = [
-    ['s0', 's1'],
-    ['s3', 's4', 's5', 's6'],
-    ['s7', 's8', 's9'],
-    ['s10', 's11', 's12'],
-    ['s13', 's14', 's15', 's16']
-  ]
+    ["s0", "s1"],
+    ["s2", "s3", "s4"],
+    ["s7", "aisle", "s6", "s5"],
+    ["s8", "aisle", "s9", "s10"],
+    ["s13", "aisle", "s12", "s11"],
+    ["s14", "s15", "s16"],
+  ];
 
-  const totalSeats = seatRows.flat().length
+  const totalSeats = seatRows.flat().filter((s) => s !== "aisle").length;
 
   const routeKey = vehicle
     ? `${location.pathname}:${vehicle.number_plate}`
-    : location.pathname
+    : location.pathname;
 
   const loadSeats = () => {
-
     const stored =
-      JSON.parse(localStorage.getItem(`paidSeats:${routeKey}`)) || []
-
-    setPaidSeats(stored)
-  }
-
-  useEffect(() => {
-
-    if (!vehicle) return
-
-    loadSeats()
-
-    const sync = () => loadSeats()
-
-    window.addEventListener("seat-sync", sync)
-
-    return () =>
-      window.removeEventListener("seat-sync", sync)
-
-  }, [routeKey, vehicle])
+      JSON.parse(localStorage.getItem(`paidSeats:${routeKey}`)) || [];
+    setPaidSeats(stored);
+  };
 
   useEffect(() => {
+    if (!vehicle) return;
 
+    loadSeats();
+
+    const sync = () => loadSeats();
+    window.addEventListener("seat-sync", sync);
+
+    return () => window.removeEventListener("seat-sync", sync);
+  }, [routeKey, vehicle]);
+
+  useEffect(() => {
     if (paidSeats.length >= totalSeats) {
-
-      setVehicleIndex(prev =>
+      setVehicleIndex((prev) =>
         prev < vehicles.length - 1 ? prev + 1 : prev
-      )
+      );
+    }
+  }, [paidSeats, vehicles.length, totalSeats]);
+
+  const handleSeatSelection = (seat) => {
+    setSelectedSeats((prev) => {
+      if (prev.includes(seat)) {
+        return prev.filter((s) => s !== seat);
+      }
+      return [...prev, seat];
+    });
+  };
+
+  const handleDone = () => {
+    if (selectedSeats.length === 0) {
+      alert("Please select at least one seat");
+      return;
     }
 
-  }, [paidSeats, vehicles.length, totalSeats])
+    if (!vehicle?.number_plate) {
+      alert("Please wait as the vehicle gets uploaded..");
+      return;
+    }
 
-  const handleSeatClick = (seat) => {
-
-    if (!vehicle) return
-
-    navigate('/mpesa', {
+    navigate("/mpesa", {
       state: {
-        seat,
+        seats: selectedSeats,
         from: location.pathname,
-        vehicle: vehicle.number_plate
-      }
-    })
-  }
+        vehicle: vehicle.number_plate,
+      },
+    });
+  };
+
+  const seatStyle = (seat) => {
+    const isPaid = paidSeats.includes(seat);
+    const isSelected = selectedSeats.includes(seat);
+
+    return {
+      width: "55px",
+      height: "55px",
+      borderRadius: "14px",
+      background: isPaid
+        ? "red"
+        : isSelected
+        ? "limegreen"
+        : "#00bfff",
+      cursor: isPaid ? "not-allowed" : "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "white",
+      fontWeight: "bold",
+      border: "2px solid white",
+      boxShadow: "0 4px 10px rgba(0,0,0,0.35)",
+      userSelect: "none",
+    };
+  };
 
   return (
+    <div className="min-vh-100 py-4">
+      <div className="container d-flex flex-column align-items-center">
 
-    <div className='bg-dark row justify-content-center'>
+        <b className="btn bg-info text-dark mb-3">
+          Isiolo-Mombasa
+        </b>
 
-      <b className='btn bg-info text-dark'>
-        Isiolo-Mombasa
-      </b>
+        <b>Vehicle: </b>
+        <p className="text-info text-center btn" id="numberplate">
+          <b>{vehicle?.number_plate || "Vehicle being uploaded..."}</b>
+        </p>
 
-      <p className='text-white text-center mt-2'>
-        Vehicle: {vehicle?.number_plate || "Loading vehicles..."}
-      </p>
+        <div
+          className="p-4 mt-3"
+          style={{
+            background: "#1c1c1c",
+            borderRadius: "25px",
+            border: "3px solid #00bfff",
+            width: "350px",
+          }}
+        >
+          {/* FRONT */}
+          <div className="d-flex justify-content-center align-items-center mb-4">
 
-      <div className='col-md-6'>
+            <div onClick={() => handleSeatSelection("s0")} style={seatStyle("s0")}>
+              0
+            </div>
 
-        {seatRows.map((row, i) => (
+            <div onClick={() => handleSeatSelection("s1")} style={seatStyle("s1")}>
+              1
+            </div>
 
-          <div key={i}>
+            <div style={{ width: "55px" }} />
 
-            {row.map(seat => (
-
-              <input
-                key={seat}
-                type="checkbox"
-                checked={paidSeats.includes(seat)}
-                disabled={paidSeats.includes(seat)}
-                onChange={() => handleSeatClick(seat)}
-              />
-
-            ))}
-
-            <br />
+            <div
+              style={{
+                width: "55px",
+                height: "55px",
+                borderRadius: "14px",
+                background: "#444",
+                color: "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "bold",
+                border: "2px solid white",
+              }}
+            >
+              D
+            </div>
 
           </div>
 
-        ))}
+          {/* SEATS */}
+          {seatRows.slice(1).map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="d-flex align-items-center mb-3"
+              style={{
+                gap: "10px",
+                justifyContent: "center",
+                paddingLeft:
+                  row.includes("s2") || row.includes("s14") ? "60px" : "0px",
+                paddingRight:
+                  row.includes("s4") || row.includes("s16") ? "60px" : "0px",
+              }}
+            >
+              {row.map((seat, i) => {
+                if (seat === "aisle") {
+                  return (
+                    <div
+                      key={`aisle-${rowIndex}-${i}`}
+                      style={{ width: "40px" }}
+                    />
+                  );
+                }
 
+                return (
+                  <div
+                    key={seat}
+                    onClick={() => {
+                      if (paidSeats.includes(seat)) return;
+                      handleSeatSelection(seat);
+                    }}
+                    style={seatStyle(seat)}
+                  >
+                    {seat.replace("s", "")}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* LEGEND */}
+        <div className="d-flex gap-4 mt-4 flex-wrap text-white">
+          <div className="d-flex align-items-center gap-2">
+            <div style={{ width: 20, height: 20, background: "#00bfff", borderRadius: 4 }} />
+            Available
+          </div>
+
+          <div className="d-flex align-items-center gap-2">
+            <div style={{ width: 20, height: 20, background: "limegreen", borderRadius: 4 }} />
+            Selected
+          </div>
+
+          <div className="d-flex align-items-center gap-2">
+            <div style={{ width: 20, height: 20, background: "red", borderRadius: 4 }} />
+            Booked
+          </div>
+        </div>
+
+        <input
+          type="submit"
+          value={"DONE"}
+          onClick={handleDone}
+          className="btn bg-info text-dark mt-4 px-5"
+        />
       </div>
-
     </div>
-  )
-}
+  );
+};
 
-export default IsioloMombasa
+export default IsioloMombasa;

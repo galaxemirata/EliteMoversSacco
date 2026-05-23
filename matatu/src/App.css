@@ -49,10 +49,6 @@
   padding-right: 10px;
 }
 
-.navbar{
-  text-align: end;
-  background-color: black;
-}
 
 .img{
   padding-right: 10px;
@@ -72,9 +68,7 @@
 }
 
 
-.h1main{
-  margin-left: 120px;
-}
+
 
 .card{
   background-color: black;
@@ -189,5 +183,94 @@
 }
 
 #aboutcontainer{
+  background-color: black;
+}
+
+/* NAVBAR */
+
+.navbar-custom{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: black;
+  padding: 10px 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* LEFT */
+
+.nav-left{
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* CENTER */
+
+.nav-center{
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+#h1main{
+  color: aqua;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  letter-spacing: 8px;
+  margin: 0;
+  font-size: 2rem;
+  text-align: center;
+}
+
+/* RIGHT */
+
+.nav-right{
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.navlink{
+  text-decoration: none;
+  font-size: 16px;
+}
+
+/* LOGO */
+
+.logo-link img{
+  max-width: 100%;
+  height: auto;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px){
+
+  .navbar-custom{
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .nav-center{
+    order: -1;
+  }
+
+  #h1main{
+    font-size: 1.5rem;
+    letter-spacing: 4px;
+  }
+
+  .nav-right{
+    justify-content: center;
+  }
+}
+
+#numberplate{
+  background-color: black;
+}
+
+#mpesacard{
   background-color: black;
 }

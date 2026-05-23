@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
-const AdminSignIn = () => {
+const AdminSignIn = ({ setAdmin }) => {
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -40,9 +40,12 @@ const AdminSignIn = () => {
                     "admin",
                     JSON.stringify(response.data.admin)
                 )
-                navigate('/admin')
 
-                
+                // UPDATE REACT STATE
+                setAdmin(response.data.admin)
+
+                // NAVIGATE WITHOUT RELOAD
+                navigate("/admin")
 
             } else {
 
@@ -52,7 +55,6 @@ const AdminSignIn = () => {
         } catch (error) {
 
             setLoading("")
-
             setError("Login failed")
         }
     }
@@ -94,12 +96,11 @@ const AdminSignIn = () => {
                     <br />
 
                     <button
+                        type='submit'
                         className='btn btn-info w-100 text-white'
                     >
                         Sign In
                     </button>
-
-                    
 
                 </form>
 

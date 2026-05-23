@@ -68,7 +68,7 @@ function ChatBot() {
                 className="btn btn-info chatbot-btn"
                 onClick={() => setOpen(!open)}
             >
-                Issue?
+                Help
             </button>
 
             {/* CHAT WINDOW */}

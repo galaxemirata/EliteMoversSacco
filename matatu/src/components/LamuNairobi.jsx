@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 
-const NairobiKaratina = () => {
+const LamuNairobi = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,7 +15,7 @@ const NairobiKaratina = () => {
       .then((res) => res.json())
       .then((data) => {
         const filtered = data.filter(
-          (v) => v.route_name === "nairobi-karatina"
+          (v) => v.route_name === "lamu-nairobi"
         );
         setVehicles(filtered);
       })
@@ -123,7 +123,7 @@ const NairobiKaratina = () => {
       <div className="container d-flex flex-column align-items-center">
 
         <b className="btn bg-info text-dark mb-3">
-          Nairobi-Karatina
+          Lamu-Nairobi
         </b>
 
         <b>Vehicle: </b>
@@ -242,4 +242,4 @@ const NairobiKaratina = () => {
   );
 };
 
-export default NairobiKaratina;
+export default LamuNairobi;

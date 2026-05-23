@@ -26,6 +26,8 @@ function About() {
                     <li>Isiolo</li>
                     <li>Karatina</li>
                     <li>Nanyuki</li>
+                    <li>lamu</li>
+
                 </ul>
 
                 <p className='text-white'>

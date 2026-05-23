@@ -93,6 +93,12 @@ const Book = () => {
     
 
     else if(route === "Nanyuki-Mombasa"){navigate("/nanyuki-mombasa")}
+
+
+    else if(route === "Nairobi-Lamu"){navigate("/nairobi-lamu")}
+
+
+    else if(route === "Lamu-Nairobi"){navigate("/lamu-nairobi")}
       
     
 
@@ -124,6 +130,9 @@ const Book = () => {
             <option value="Isiolo">Isiolo</option>
             <option value="Karatina">Karatina</option>
             <option value="Nanyuki">Nanyuki</option>
+            <option value="Lamu">Lamu</option>
+
+
           </select>
         </div>
 
@@ -139,6 +148,10 @@ const Book = () => {
             <option value="Isiolo">Isiolo</option>
             <option value="Karatina">Karatina</option>
             <option value="Nanyuki">Nanyuki</option>
+            <option value="Lamu">Lamu</option>
+            
+
+
           </select>
         </div>
 

@@ -92,54 +92,42 @@ def get_db():
         cursorclass=pymysql.cursors.DictCursor
     )
 
-import requests
-import datetime
-import base64
-from requests.auth import HTTPBasicAuth
 
-import requests
-import datetime
-import base64
-from requests.auth import HTTPBasicAuth
+from flask import request, jsonify
+
 
 @app.route('/api/mpesa_payment', methods=['POST'])
 def mpesa_payment():
     if request.method == 'POST':
 
-        # Extract POST values
+        # Extract POST Values sent
         data = request.get_json()
-
-        phone = data.get('phone')
         amount = data.get('amount')
-        seat = data.get('seat')
-        route_name = data.get('route')
-        vehicle = data.get('vehicle')
-        pickup = data.get('pickup_location')
+        phone = data.get('phone')
 
-        # ================= MPESA PAYMENT =================
+        # Example additional booking data (make sure these come from request or session)
+        vehicle = data.get('vehicle')
+        seat = data.get('seat')
+        pickup = data.get('pickup_location')
+        seat_price = amount
 
         # Safaricom credentials
         consumer_key = "GTWADFxIpUfDoNikNGqq1C3023evM6UH"
         consumer_secret = "amFbAoUByPV2rM5A"
 
-        # Authentication URL
         api_URL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        response = requests.get(api_URL, auth=HTTPBasicAuth(consumer_key, consumer_secret))
+        data = response.json()
+        access_token = "Bearer " + data['access_token']
 
-        # Generate access token
-        response = requests.get(
-            api_URL,
-            auth=HTTPBasicAuth(consumer_key, consumer_secret)
-        )
-
-        access_token = "Bearer " + response.json()['access_token']
-
-        # Generate password
+        # Timestamp & password
         timestamp = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
-        passkey = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+        passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
         business_short_code = "174379"
 
-        password_data = business_short_code + passkey + timestamp
-        password = base64.b64encode(password_data.encode()).decode()
+        data_to_encode = business_short_code + passkey + timestamp
+        encoded = base64.b64encode(data_to_encode.encode())
+        password = encoded.decode()
 
         # STK Push payload
         payload = {
@@ -147,35 +135,28 @@ def mpesa_payment():
             "Password": password,
             "Timestamp": timestamp,
             "TransactionType": "CustomerPayBillOnline",
-            "Amount": amount,   # use 1 when testing
+            "Amount": amount,
             "PartyA": phone,
             "PartyB": business_short_code,
             "PhoneNumber": phone,
             "CallBackURL": "https://coding.co.ke/api/confirm.php",
-            "AccountReference": "chui SokoGarden Online",
+            "AccountReference":phone,
             "TransactionDesc": "Payments for Products"
         }
 
-        # Headers
         headers = {
             "Authorization": access_token,
             "Content-Type": "application/json"
         }
 
-        # STK Push URL
         url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+        response = requests.post(url, json=payload, headers=headers)
 
-        # Send STK Push
-        stk_response = requests.post(
-            url,
-            json=payload,
-            headers=headers
-        )
+        print(response.text)
 
-        print(stk_response.text)
-
-        # ================= SAVE BOOKING =================
-
+        # -----------------------------
+        # DATABASE INSERT (BOOKING)
+        # -----------------------------
         try:
             connection = pymysql.connect(
                 host="localhost",
@@ -183,10 +164,9 @@ def mpesa_payment():
                 password="",
                 database="matatu"
             )
-
             cursor = connection.cursor()
 
-            cursor.execute("""
+            insert_query = """
                 INSERT INTO bookings(
                     number_plate,
                     seat_number,
@@ -196,28 +176,28 @@ def mpesa_payment():
                     status
                 )
                 VALUES(%s,%s,%s,%s,%s,%s)
-            """, (
+            """
+
+            cursor.execute(insert_query, (
                 vehicle,
                 seat,
                 phone,
-                amount,
+                seat_price,
                 pickup,
-                "Paid"
+                "Pending"
             ))
 
             connection.commit()
-
             cursor.close()
             connection.close()
 
-            return jsonify({
-                "message": "An MPESA Prompt has been sent to Your Phone, Please Check & Complete Payment"
-            })
-
         except Exception as e:
-            return jsonify({
-                "error": str(e)
-            }), 500
+            print("DB Error:", e)
+
+        return jsonify({
+            "message": "Thankyou..Please check phone to complete payment"
+        })
+
 
 
 @app.route('/api/mpesa_cancel', methods=['POST'])

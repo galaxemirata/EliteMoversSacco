@@ -1,23 +1,34 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const SignIn = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-
-  const [loading, setLoading] = useState("")
-  const [success, setSuccess] = useState("")
-  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
   const submit = async (e) => {
     e.preventDefault();
-    setLoading("Please wait...");
+
+    if (loading) return;
+
+    // VALIDATION
+    if (!email || !password) {
+      setSuccess("");
+      setError("Please fill all fields");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
     try {
       const formData = new FormData();
@@ -29,92 +40,165 @@ const SignIn = () => {
         formData
       );
 
-      setLoading("");
+      if (response?.data?.user) {
+        // SAVE USER
+        localStorage.setItem(
+          "user",
+          JSON.stringify(response.data.user)
+        );
 
-      if (response.data.user) {
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        setSuccess(response.data.message);
+        // SAVE USERNAME FOR CHATBOT
+        localStorage.setItem(
+          "username",
+          response.data.user.username
+        );
 
-        setError("")
+        setSuccess(
+          response.data.message || "Login successful"
+        );
+
+        setEmail("");
+        setPassword("");
 
         setTimeout(() => {
           navigate("/");
-        }, 2000);
+        }, 1500);
+
       } else {
-        setError(response.data.message);
+        setError(
+          response.data.message ||
+          "Invalid login credentials"
+        );
       }
 
     } catch (error) {
-      setLoading("");
-      setError(error.response?.data?.message || "Something went wrong");
+      setError(
+        error.response?.data?.message ||
+        "Something went wrong. Try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className='row justify-content-center'>
-      <div className='col-md-6 card shadow p-4' style={{borderRadius:50}} id='signin'>
-        <p><b id='signinhead'>SignIn</b></p>
+    <div className="row justify-content-center mt-4">
+      <div
+        className="col-md-6 card shadow p-4"
+        style={{ borderRadius: 30 }}
+        id="signin"
+      >
+        <h3
+          className="text-center text-info mb-4"
+          id="signinhead"
+        >
+          Sign In
+        </h3>
 
         <form onSubmit={submit}>
-          <p className='text-warning'>{loading}</p>
-          <p className='text-success'>{success}</p>
-          <p className='text-danger'>{error}</p>
+          {/* STATUS */}
+          {loading && (
+            <p className="text-warning">
+              Please wait...
+            </p>
+          )}
 
+          {success && (
+            <div className="alert alert-success">
+              {success}
+            </div>
+          )}
+
+          {error && (
+            <div className="alert alert-danger">
+              {error}
+            </div>
+          )}
+
+          {/* EMAIL */}
           <input
             type="email"
-            placeholder='Email'
-            className='form-control'
+            placeholder="Enter Email"
+            className="form-control"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
           />
 
           <br />
 
-          {/* Password with toggle */}
+          {/* PASSWORD */}
           <div style={{ position: "relative" }}>
             <input
-              type={showPassword ? "text" : "password"}
-              placeholder='Password'
-              className='form-control'
+              type={
+                showPassword
+                  ? "text"
+                  : "password"
+              }
+              placeholder="Enter Password"
+              className="form-control"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
             />
 
             <span
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() =>
+                setShowPassword(!showPassword)
+              }
               style={{
                 position: "absolute",
                 right: "10px",
                 top: "50%",
-                transform: "translateY(-50%)",
+                transform:
+                  "translateY(-50%)",
                 cursor: "pointer"
               }}
             >
-              {showPassword ?  <FaEye /> : <FaEyeSlash />}
+              {showPassword
+                ? <FaEye />
+                : <FaEyeSlash />}
             </span>
           </div>
 
           <br />
 
-          <input
+          {/* BUTTON */}
+          <button
             type="submit"
-            value="Sign In"
-            className='form-control bg-info text-white'
-            style={{borderRadius:30}}
-          />
+            className="btn bg-info text-white w-100"
+            style={{ borderRadius: 30 }}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2"></span>
+                Signing In...
+              </>
+            ) : (
+              "Sign In"
+            )}
+          </button>
 
           <br />
+          <br />
 
-          
-           <p className='text-white'><b>Don't have an account?</b></p> <Link to='/signup' className='text-primary'><b>SignUp</b></Link>
-          
+          <p className="text-dark">
+            <b>Don't have an account?</b>
+          </p>
+
+          <Link
+            to="/signup"
+            className="text-primary"
+          >
+            <b>Sign Up</b>
+          </Link>
         </form>
       </div>
-      <br />
-      <br />
-      
     </div>
-  )
-}
+  );
+};
 
-export default SignIn
+export default SignIn;

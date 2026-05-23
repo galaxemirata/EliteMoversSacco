@@ -77,7 +77,7 @@ const SignUp = () => {
         data
       )
 
-      setSuccess(response.data.message)
+      setSuccess(`Welcome ${username}`)
 
       // reset form
       setUsername("")
@@ -87,6 +87,7 @@ const SignUp = () => {
       setStrength("")
 
       setTimeout(() => {
+        
         navigate("/signin")
       }, 1500)
 
