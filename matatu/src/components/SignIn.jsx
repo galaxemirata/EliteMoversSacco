@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
-const SignIn = () => {
+const SignIn = ({ setUser }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +19,6 @@ const SignIn = () => {
 
     if (loading) return;
 
-    // VALIDATION
     if (!email || !password) {
       setSuccess("");
       setError("Please fill all fields");
@@ -41,17 +40,18 @@ const SignIn = () => {
       );
 
       if (response?.data?.user) {
-        // SAVE USER
         localStorage.setItem(
           "user",
           JSON.stringify(response.data.user)
         );
 
-        // SAVE USERNAME FOR CHATBOT
         localStorage.setItem(
           "username",
           response.data.user.username
         );
+
+        // FIX: update App state instantly
+        setUser(response.data.user);
 
         setSuccess(
           response.data.message || "Login successful"
@@ -96,7 +96,6 @@ const SignIn = () => {
         </h3>
 
         <form onSubmit={submit}>
-          {/* STATUS */}
           {loading && (
             <p className="text-warning">
               Please wait...
@@ -115,7 +114,6 @@ const SignIn = () => {
             </div>
           )}
 
-          {/* EMAIL */}
           <input
             type="email"
             placeholder="Enter Email"
@@ -128,7 +126,6 @@ const SignIn = () => {
 
           <br />
 
-          {/* PASSWORD */}
           <div style={{ position: "relative" }}>
             <input
               type={
@@ -165,7 +162,6 @@ const SignIn = () => {
 
           <br />
 
-          {/* BUTTON */}
           <button
             type="submit"
             className="btn bg-info text-white w-100"

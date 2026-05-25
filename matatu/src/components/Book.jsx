@@ -7,7 +7,14 @@ const Book = () => {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
+  // FIX: load username immediately on first render
+  const [username] = useState(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    return user?.username || "";
+  });
+
   useEffect(() => {
+    // adsense
     const timer = setTimeout(() => {
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -77,7 +84,7 @@ const Book = () => {
         style={{ borderRadius: 30 }}
         id="bookcard"
       >
-        {/* AD BANNER TOP */}
+        {/* TOP BANNER */}
         <div
           className="mb-3 p-3 text-center"
           style={{
@@ -91,8 +98,12 @@ const Book = () => {
         </div>
 
         <p>
-          <b className="text-white">
-            WELCOME, KINDLY SELECT YOUR DESTINATION
+          <b
+            className="text-white"
+            style={{ textTransform: "uppercase" }}
+          >
+            WELCOME {username ? `${username}, ` : ""} KINDLY SELECT YOUR
+            DESTINATION
           </b>
         </p>
 
@@ -132,7 +143,7 @@ const Book = () => {
           </button>
         </form>
 
-        {/* GOOGLE ADSENSE (FIXED INSIDE CARD) */}
+        {/* ADSENSE */}
         <div className="my-4 text-center">
           <ins
             className="adsbygoogle"
@@ -144,7 +155,7 @@ const Book = () => {
           ></ins>
         </div>
 
-        {/* BOTTOM AD */}
+        {/* BOTTOM BANNER */}
         <div
           className="mt-4 p-3 text-center"
           style={{
@@ -153,7 +164,10 @@ const Book = () => {
             color: "white",
           }}
         >
-          ⭐ <b>Want to hire our vehicles? Get contact details in the About section</b>
+          ⭐{" "}
+          <b>
+            Want to hire our vehicles? Get contact details in the About section
+          </b>
         </div>
       </div>
     </div>

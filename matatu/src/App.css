@@ -274,3 +274,18 @@
 #mpesacard{
   background-color: black;
 }
+
+/* ADMIN LINK */
+
+.admin-link {
+  text-decoration: none;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  transition: 0.3s;
+  margin-left: 8px;
+}
+
+.admin-link:hover {
+  color: aqua;
+  opacity: 1;
+}
