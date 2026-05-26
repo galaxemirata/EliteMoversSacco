@@ -230,7 +230,7 @@ def mpesa_payment():
             "message": "Thankyou..Please check phone to complete payment"
         })
     
-    
+
 @app.route('/api/mpesa_cancel', methods=['POST'])
 def mpesa_cancel():
 
@@ -293,9 +293,10 @@ def add_vehicle():
     data = request.get_json()
 
     number_plate = data.get('number_plate')
+    driver_name = data.get('driver_name')
     route_name = data.get('route_name')
     total_seats = data.get('total_seats')
-    price = data.get('price')   # 👈 ADD THIS
+    price = data.get('price')
 
     connection = pymysql.connect(
         host="localhost",
@@ -309,19 +310,28 @@ def add_vehicle():
     cursor.execute("""
         INSERT INTO vehicles(
             number_plate,
+            driver_name,
             route_name,
             total_seats,
             price
         )
-        VALUES(%s,%s,%s,%s)
-    """, (number_plate, route_name, total_seats, price))
+        VALUES(%s,%s,%s,%s,%s)
+    """, (
+        number_plate,
+        driver_name,
+        route_name,
+        total_seats,
+        price
+    ))
 
     connection.commit()
 
     cursor.close()
     connection.close()
 
-    return jsonify({"message": "Vehicle added successfully"})
+    return jsonify({
+        "message": "Vehicle added successfully"
+    })
 
 @app.route('/api/vehicles')
 def vehicles():

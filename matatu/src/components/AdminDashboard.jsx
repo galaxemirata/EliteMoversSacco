@@ -6,6 +6,7 @@ const AdminDashboard = () => {
   const [vehicles, setVehicles] = useState([])
 
   const [numberPlate, setNumberPlate] = useState("")
+  const [driverName, setDriverName] = useState("")
   const [routeName, setRouteName] = useState("")
   const [totalSeats, setTotalSeats] = useState("")
   const [price, setPrice] = useState("")
@@ -44,7 +45,13 @@ const AdminDashboard = () => {
   // ADD VEHICLE
   const addVehicle = async () => {
 
-    if (!numberPlate || !routeName || !totalSeats || !price) {
+    if (
+      !numberPlate ||
+      !driverName ||
+      !routeName ||
+      !totalSeats ||
+      !price
+    ) {
       alert("Fill all fields")
       return
     }
@@ -61,6 +68,7 @@ const AdminDashboard = () => {
 
           body: JSON.stringify({
             number_plate: numberPlate,
+            driver_name: driverName,
             route_name: routeName,
             total_seats: Number(totalSeats),
             price: Number(price)
@@ -73,6 +81,7 @@ const AdminDashboard = () => {
       alert(data.message || "Vehicle added successfully")
 
       setNumberPlate("")
+      setDriverName("")
       setRouteName("")
       setTotalSeats("")
       setPrice("")
@@ -126,7 +135,7 @@ const AdminDashboard = () => {
   }
 
   // PRINT BOOKINGS
-  const printVehicleBookings = (vehicle) => {
+  const printVehicleBookings = (vehicle, driverName) => {
 
     const printContents =
       document.getElementById(`print-${vehicle}`).innerHTML
@@ -156,6 +165,10 @@ const AdminDashboard = () => {
             }
 
             h2{
+              margin-bottom:10px;
+            }
+
+            h3{
               margin-bottom:20px;
             }
           </style>
@@ -165,6 +178,8 @@ const AdminDashboard = () => {
         <body>
 
           <h2>Vehicle: ${vehicle}</h2>
+
+          <h3>Driver: ${driverName || "No Driver"}</h3>
 
           ${printContents}
 
@@ -202,58 +217,74 @@ const AdminDashboard = () => {
             return acc
 
           }, {})
-        ).map(vehicle => (
+        ).map(vehicle => {
 
-          <div key={vehicle} className="card p-3 mb-3">
+          const currentVehicle = vehicles.find(
+            v =>
+              v.number_plate?.trim().toLowerCase() ===
+              vehicle?.trim().toLowerCase()
+          )
 
-            <h4 className="text-primary">{vehicle}</h4>
+          return (
 
-            <div id={`print-${vehicle}`}>
+            <div key={vehicle} className="card p-3 mb-3">
 
-              <table className='table table-sm'>
+              <h4 className="text-primary">
+                {vehicle} — {currentVehicle?.driver_name || "No Driver"}
+              </h4>
 
-                <thead>
-                  <tr>
-                    <th>Seat</th>
-                    <th>Phone</th>
-                    <th>Amount</th>
-                    <th>Route</th>
-                    <th>Pickup Location</th>
-                  </tr>
-                </thead>
+              <div id={`print-${vehicle}`}>
 
-                <tbody>
+                <table className='table table-sm'>
 
-                  {bookings
-                    .filter(b => b.number_plate === vehicle)
-                    .map(b => (
+                  <thead>
+                    <tr>
+                      <th>Seat</th>
+                      <th>Phone</th>
+                      <th>Amount</th>
+                      <th>Route</th>
+                      <th>Pickup Location</th>
+                    </tr>
+                  </thead>
 
-                      <tr key={b.id}>
-                        <td>{b.seat_number}</td>
-                        <td>{b.phone}</td>
-                        <td>KES {b.amount}</td>
-                        <td>{b.route_name}</td>
-                        <td>{b.pickup_location}</td>
-                      </tr>
+                  <tbody>
 
-                    ))}
+                    {bookings
+                      .filter(b => b.number_plate === vehicle)
+                      .map(b => (
 
-                </tbody>
+                        <tr key={b.id}>
+                          <td>{b.seat_number}</td>
+                          <td>{b.phone}</td>
+                          <td>KES {b.amount}</td>
+                          <td>{b.route_name}</td>
+                          <td>{b.pickup_location}</td>
+                        </tr>
 
-              </table>
+                      ))}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+              <button
+                className="btn btn-dark mt-2"
+                onClick={() =>
+                  printVehicleBookings(
+                    vehicle,
+                    currentVehicle?.driver_name
+                  )
+                }
+              >
+                Print Bookings
+              </button>
 
             </div>
 
-            <button
-              className="btn btn-dark mt-2"
-              onClick={() => printVehicleBookings(vehicle)}
-            >
-              Print Bookings
-            </button>
-
-          </div>
-
-        ))}
+          )
+        })}
 
       </div>
 
@@ -267,6 +298,14 @@ const AdminDashboard = () => {
           className="form-control mb-2"
           value={numberPlate}
           onChange={(e) => setNumberPlate(e.target.value)}
+        />
+
+        <input
+          type="text"
+          placeholder="Driver Name"
+          className="form-control mb-2"
+          value={driverName}
+          onChange={(e) => setDriverName(e.target.value)}
         />
 
         <input
@@ -316,7 +355,8 @@ const AdminDashboard = () => {
 
           <div key={v.id}>
 
-            {v.number_plate} — {v.route_name} ({v.total_seats} seats)
+            {v.number_plate} — {v.driver_name} — {v.route_name}
+            ({v.total_seats} seats)
             {" "} @ {v.price}
 
             <br />

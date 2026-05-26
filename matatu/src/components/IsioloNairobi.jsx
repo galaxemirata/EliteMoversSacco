@@ -128,8 +128,14 @@ const IsioloNairobi = () => {
         </b>
 
         <b>Vehicle: </b>
+
+        {/* FIX: DRIVER NAME ADDED */}
         <p className="text-info text-center btn" id="numberplate">
-          <b>{vehicle?.number_plate || "Vehicle being uploaded..."}</b>
+          <b>
+            {vehicle
+              ? `${vehicle.number_plate} - ${vehicle.driver_name}`
+              : "Vehicle being uploaded..."}
+          </b>
         </p>
 
         <p className="text-dark fw-bold">

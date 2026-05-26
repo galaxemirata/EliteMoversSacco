@@ -130,13 +130,19 @@ const IsioloKaratina = () => {
         </b>
 
         <b>Vehicle: </b>
+
+        {/* NECESSARY FIX ONLY */}
         <p className="text-info text-center btn" id="numberplate">
-          <b>{vehicle?.number_plate || "Vehicle being uploaded..."}</b>
+          <b>
+            {vehicle
+              ? `${vehicle.number_plate} — ${vehicle.driver_name}`
+              : "Vehicle being uploaded..."}
+          </b>
         </p>
 
         {/* FIX: Remaining empty seats display */}
         <p className="text-dark fw-bold">
-        <b>{remainingSeats} Seats Remaining</b>
+          <b>{remainingSeats} Seats Remaining</b>
         </p>
 
         <div

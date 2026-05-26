@@ -127,9 +127,14 @@ const KaratinaIsiolo = () => {
           Karatina-Isiolo
         </b>
 
-        <b>Vehicle: </b>
+        <b>Vehicle:</b>
+
         <p className="text-info text-center btn" id="numberplate">
-          <b>{vehicle?.number_plate || "Vehicle being uploaded..."}</b>
+          <b>
+            {vehicle
+              ? `${vehicle.number_plate} — Driver: ${vehicle.driver_name}`
+              : "Vehicle being uploaded..."}
+          </b>
         </p>
 
         <p className="text-dark fw-bold">
@@ -146,11 +151,17 @@ const KaratinaIsiolo = () => {
           }}
         >
           <div className="d-flex justify-content-center align-items-center mb-4">
-            <div onClick={() => handleSeatSelection("s0")} style={seatStyle("s0")}>
+            <div
+              onClick={() => handleSeatSelection("s0")}
+              style={seatStyle("s0")}
+            >
               0
             </div>
 
-            <div onClick={() => handleSeatSelection("s1")} style={seatStyle("s1")}>
+            <div
+              onClick={() => handleSeatSelection("s1")}
+              style={seatStyle("s1")}
+            >
               1
             </div>
 
@@ -182,9 +193,13 @@ const KaratinaIsiolo = () => {
                 gap: "10px",
                 justifyContent: "center",
                 paddingLeft:
-                  row.includes("s2") || row.includes("s14") ? "60px" : "0px",
+                  row.includes("s2") || row.includes("s14")
+                    ? "60px"
+                    : "0px",
                 paddingRight:
-                  row.includes("s4") || row.includes("s16") ? "60px" : "0px",
+                  row.includes("s4") || row.includes("s16")
+                    ? "60px"
+                    : "0px",
               }}
             >
               {row.map((seat, i) => {

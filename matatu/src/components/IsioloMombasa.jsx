@@ -130,11 +130,16 @@ const IsioloMombasa = () => {
         </b>
 
         <b>Vehicle: </b>
+
+        {/* FIX: DRIVER NAME ADDED */}
         <p className="text-info text-center btn" id="numberplate">
-          <b>{vehicle?.number_plate || "Vehicle being uploaded..."}</b>
+          <b>
+            {vehicle
+              ? `${vehicle.number_plate} - ${vehicle.driver_name}`
+              : "Vehicle being uploaded..."}
+          </b>
         </p>
 
-        {/* FIX: Remaining empty seats display */}
         <p className="text-dark fw-bold">
           <b>{remainingSeats} Seats Remaining</b>
         </p>
@@ -148,7 +153,6 @@ const IsioloMombasa = () => {
             width: "350px",
           }}
         >
-          {/* FRONT */}
           <div className="d-flex justify-content-center align-items-center mb-4">
             <div onClick={() => handleSeatSelection("s0")} style={seatStyle("s0")}>
               0
@@ -178,7 +182,6 @@ const IsioloMombasa = () => {
             </div>
           </div>
 
-          {/* SEATS */}
           {seatRows.slice(1).map((row, rowIndex) => (
             <div
               key={rowIndex}
@@ -219,7 +222,6 @@ const IsioloMombasa = () => {
           ))}
         </div>
 
-        {/* LEGEND */}
         <div className="d-flex gap-4 mt-4 flex-wrap text-white">
           <div className="d-flex align-items-center gap-2">
             <div

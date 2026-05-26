@@ -127,10 +127,13 @@ const LamuNairobi = () => {
         </b>
 
         <b>Vehicle: </b>
-        <p className="text-info text-center btn" id="numberplate">
-          <b>{vehicle?.number_plate || "Vehicle being uploaded..."}</b>
-        </p>
-
+<p className="text-info text-center btn" id="numberplate">
+  <b>
+    {vehicle
+      ? `${vehicle.number_plate} - Driver: ${vehicle.driver_name}`
+      : "Vehicle being uploaded..."}
+  </b>
+</p>
         <p className="text-dark fw-bold">
           <b>{remainingSeats} Seats Remaining</b>
         </p>
