@@ -98,17 +98,24 @@ from flask import request, jsonify
 
 @app.route('/api/mpesa_payment', methods=['POST'])
 def mpesa_payment():
+
     if request.method == 'POST':
 
         # Extract POST Values sent
         data = request.get_json()
+
         amount = data.get('amount')
         phone = data.get('phone')
 
-        # Example additional booking data (make sure these come from request or session)
+        # ✅ FIXED
         vehicle = data.get('vehicle')
-        seat = data.get('seat')
+
+        seat = ",".join(data.get('seats'))
+
         pickup = data.get('pickup_location')
+
+        route_name = data.get('route_name')
+
         seat_price = amount
 
         # Safaricom credentials
@@ -116,17 +123,32 @@ def mpesa_payment():
         consumer_secret = "amFbAoUByPV2rM5A"
 
         api_URL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        response = requests.get(api_URL, auth=HTTPBasicAuth(consumer_key, consumer_secret))
+
+        response = requests.get(
+            api_URL,
+            auth=HTTPBasicAuth(
+                consumer_key,
+                consumer_secret
+            )
+        )
+
         data = response.json()
+
         access_token = "Bearer " + data['access_token']
 
         # Timestamp & password
         timestamp = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
+
         passkey = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919'
+
         business_short_code = "174379"
 
         data_to_encode = business_short_code + passkey + timestamp
-        encoded = base64.b64encode(data_to_encode.encode())
+
+        encoded = base64.b64encode(
+            data_to_encode.encode()
+        )
+
         password = encoded.decode()
 
         # STK Push payload
@@ -140,7 +162,7 @@ def mpesa_payment():
             "PartyB": business_short_code,
             "PhoneNumber": phone,
             "CallBackURL": "https://coding.co.ke/api/confirm.php",
-            "AccountReference":phone,
+            "AccountReference": phone,
             "TransactionDesc": "Payments for Products"
         }
 
@@ -150,20 +172,27 @@ def mpesa_payment():
         }
 
         url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-        response = requests.post(url, json=payload, headers=headers)
+
+        response = requests.post(
+            url,
+            json=payload,
+            headers=headers
+        )
 
         print(response.text)
 
-        # -----------------------------
-        # DATABASE INSERT (BOOKING)
-        # -----------------------------
+        # =============================
+        # DATABASE INSERT
+        # =============================
         try:
+
             connection = pymysql.connect(
                 host="localhost",
                 user="root",
                 password="",
                 database="matatu"
             )
+
             cursor = connection.cursor()
 
             insert_query = """
@@ -172,10 +201,11 @@ def mpesa_payment():
                     seat_number,
                     phone,
                     amount,
+                    route_name,
                     pickup_location,
                     status
                 )
-                VALUES(%s,%s,%s,%s,%s,%s)
+                VALUES(%s,%s,%s,%s,%s,%s,%s)
             """
 
             cursor.execute(insert_query, (
@@ -183,11 +213,13 @@ def mpesa_payment():
                 seat,
                 phone,
                 seat_price,
+                route_name,
                 pickup,
                 "Pending"
             ))
 
             connection.commit()
+
             cursor.close()
             connection.close()
 
@@ -197,9 +229,8 @@ def mpesa_payment():
         return jsonify({
             "message": "Thankyou..Please check phone to complete payment"
         })
-
-
-
+    
+    
 @app.route('/api/mpesa_cancel', methods=['POST'])
 def mpesa_cancel():
 
@@ -445,6 +476,37 @@ def remove_vehicle(vehicle_id):
             "success": False,
             "message": str(e)
         }), 500
+    
+
+    # ==============================
+# ADMIN BOOKINGS API
+# ==============================
+
+@app.route('/api/admin/bookings', methods=['GET'])
+def admin_bookings():
+
+    connection = pymysql.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM bookings
+    """)
+
+    bookings = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(bookings)
+
 
 # RUN APP
 

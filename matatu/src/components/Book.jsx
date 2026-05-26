@@ -94,7 +94,7 @@ const Book = () => {
             fontWeight: "bold",
           }}
         >
-          🚍 Travel With Comfort – Book With us and save 5%
+          Book With us, Travel With Comfort and save 5%
         </div>
 
         <p>

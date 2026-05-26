@@ -8,7 +8,7 @@ const Mpesa = () => {
   const from = location.state?.from;
   const vehicle = location.state?.vehicle;
 
- const seats = location.state?.seats || []; 
+  const seats = location.state?.seats || [];
   const seatCount = seats.length;
 
   const routeKey = `${from}:${vehicle}`;
@@ -79,11 +79,13 @@ const Mpesa = () => {
           headers: {
             "Content-Type": "application/json",
           },
+
+          // ✅ FIXED route_name
           body: JSON.stringify({
             phone,
             seats,
-            amount,               
-            route: routeName,
+            amount,
+            route_name: routeName,
             vehicle,
             pickup_location: pickup,
           }),
@@ -113,9 +115,11 @@ const Mpesa = () => {
       alert("Thankyou..Please check your phone to complete payment");
 
       navigate(from);
+
     } catch (err) {
       console.log(err);
       alert("Network error. Please try again.");
+
     } finally {
       setLoading(false);
     }
@@ -126,9 +130,11 @@ const Mpesa = () => {
       <div className="card col-md-5 shadow p-4" id="mpesacard">
 
         {/* HEADER */}
-        <h4 className="text-center mb-3 text-white"> M-Pesa Payment</h4> <b className="text-info"> {from} </b>
-         
-        
+        <h4 className="text-center mb-3 text-white">
+          M-Pesa Payment
+        </h4>
+
+        <b className="text-info">{from}</b>
 
         {/* VEHICLE */}
         <input
@@ -140,7 +146,10 @@ const Mpesa = () => {
         {/* SEATS */}
         {seats.length > 0 && (
           <div className="mb-2">
-            <small className="text-secondary">Selected Seats</small>
+            <small className="text-secondary">
+              Selected Seats
+            </small>
+
             <p className="text-warning mb-1">
               {seats.join(", ")}
             </p>
@@ -161,7 +170,7 @@ const Mpesa = () => {
           <strong>Total:</strong>{" "}
           {seatCount} × {pricePerSeat} ={" "}
           <span className="text-success fw-bold">
-            {seatCount * pricePerSeat} 
+            {seatCount * pricePerSeat}
           </span>
         </div>
 
@@ -182,13 +191,14 @@ const Mpesa = () => {
           {loading ? "Processing..." : "Pay with M-Pesa"}
         </button>
 
-        {/* BACK BUTTON */} 
+        {/* BACK BUTTON */}
         <button
           className="btn btn-secondary w-100 mt-2"
           onClick={() => navigate(from)}
         >
           Back
         </button>
+
       </div>
     </div>
   );

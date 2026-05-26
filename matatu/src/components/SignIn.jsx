@@ -181,7 +181,7 @@ const SignIn = ({ setUser }) => {
           <br />
           <br />
 
-          <p className="text-dark">
+          <p className="text-white">
             <b>Don't have an account?</b>
           </p>
 

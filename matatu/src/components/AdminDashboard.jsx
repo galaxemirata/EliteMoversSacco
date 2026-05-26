@@ -8,30 +8,29 @@ const AdminDashboard = () => {
   const [numberPlate, setNumberPlate] = useState("")
   const [routeName, setRouteName] = useState("")
   const [totalSeats, setTotalSeats] = useState("")
-  const [price, setPrice] = useState("") // ONLY ADDITION
+  const [price, setPrice] = useState("")
 
-  
   // FETCH BOOKINGS
-
   const fetchBookings = async () => {
 
     try {
       const res = await fetch("http://localhost:5000/api/admin/bookings")
       const data = await res.json()
       setBookings(data)
+
     } catch (err) {
       console.log(err)
     }
   }
 
   // FETCH VEHICLES
- 
   const fetchVehicles = async () => {
 
     try {
       const res = await fetch("http://localhost:5000/api/vehicles")
       const data = await res.json()
       setVehicles(data)
+
     } catch (err) {
       console.log(err)
     }
@@ -42,9 +41,7 @@ const AdminDashboard = () => {
     fetchVehicles()
   }, [])
 
-
-  // ADD VEHICLE (LOGIC PRESERVED)
- 
+  // ADD VEHICLE
   const addVehicle = async () => {
 
     if (!numberPlate || !routeName || !totalSeats || !price) {
@@ -61,6 +58,7 @@ const AdminDashboard = () => {
           headers: {
             "Content-Type": "application/json"
           },
+
           body: JSON.stringify({
             number_plate: numberPlate,
             route_name: routeName,
@@ -87,10 +85,8 @@ const AdminDashboard = () => {
     }
   }
 
-
-  // DELETE VEHICLE (FIXED ONLY)
-
-  const removeVehicle = async (id) => {
+  // DELETE VEHICLE
+  const removeVehicle = async (id, numberPlate) => {
 
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this vehicle?"
@@ -116,12 +112,69 @@ const AdminDashboard = () => {
 
       alert(data.message || "Vehicle removed")
 
+      // REMOVE BOOKINGS TABLE IMMEDIATELY
+      setBookings(prev =>
+        prev.filter(b => b.number_plate !== numberPlate)
+      )
+
       fetchVehicles()
 
     } catch (err) {
       console.log(err)
       alert("Error removing vehicle")
     }
+  }
+
+  // PRINT BOOKINGS
+  const printVehicleBookings = (vehicle) => {
+
+    const printContents =
+      document.getElementById(`print-${vehicle}`).innerHTML
+
+    const win = window.open("", "", "width=900,height=700")
+
+    win.document.write(`
+      <html>
+        <head>
+          <title>${vehicle} Bookings</title>
+
+          <style>
+            body{
+              font-family: Arial;
+              padding:20px;
+            }
+
+            table{
+              width:100%;
+              border-collapse: collapse;
+            }
+
+            th, td{
+              border:1px solid black;
+              padding:8px;
+              text-align:left;
+            }
+
+            h2{
+              margin-bottom:20px;
+            }
+          </style>
+
+        </head>
+
+        <body>
+
+          <h2>Vehicle: ${vehicle}</h2>
+
+          ${printContents}
+
+        </body>
+      </html>
+    `)
+
+    win.document.close()
+
+    win.print()
   }
 
   const logout = () => {
@@ -139,9 +192,15 @@ const AdminDashboard = () => {
 
         {Object.keys(
           bookings.reduce((acc, b) => {
-            if (!acc[b.number_plate]) acc[b.number_plate] = []
+
+            if (!acc[b.number_plate]) {
+              acc[b.number_plate] = []
+            }
+
             acc[b.number_plate].push(b)
+
             return acc
+
           }, {})
         ).map(vehicle => (
 
@@ -149,42 +208,54 @@ const AdminDashboard = () => {
 
             <h4 className="text-primary">{vehicle}</h4>
 
-            <table className='table table-sm'>
+            <div id={`print-${vehicle}`}>
 
-              <thead>
-                <tr>
-                  <th>Seat</th>
-                  <th>Phone</th>
-                  <th>Amount</th>
-                  <th>Route</th>
-                </tr>
-              </thead>
+              <table className='table table-sm'>
 
-              <tbody>
+                <thead>
+                  <tr>
+                    <th>Seat</th>
+                    <th>Phone</th>
+                    <th>Amount</th>
+                    <th>Route</th>
+                    <th>Pickup Location</th>
+                  </tr>
+                </thead>
 
-                {bookings
-                  .filter(b => b.number_plate === vehicle)
-                  .map(b => (
+                <tbody>
 
-                    <tr key={b.id}>
-                      <td>{b.seat_number}</td>
-                      <td>{b.phone}</td>
-                      <td>KES {b.amount}</td>
-                      <td>{b.route_name}</td>
-                    </tr>
+                  {bookings
+                    .filter(b => b.number_plate === vehicle)
+                    .map(b => (
 
-                  ))}
+                      <tr key={b.id}>
+                        <td>{b.seat_number}</td>
+                        <td>{b.phone}</td>
+                        <td>KES {b.amount}</td>
+                        <td>{b.route_name}</td>
+                        <td>{b.pickup_location}</td>
+                      </tr>
 
-              </tbody>
+                    ))}
 
-            </table>
+                </tbody>
+
+              </table>
+
+            </div>
+
+            <button
+              className="btn btn-dark mt-2"
+              onClick={() => printVehicleBookings(vehicle)}
+            >
+              Print Bookings
+            </button>
 
           </div>
 
         ))}
 
       </div>
-
 
       <div className="card p-4" id='addvehicle'>
 
@@ -214,7 +285,6 @@ const AdminDashboard = () => {
           onChange={(e) => setTotalSeats(e.target.value)}
         />
 
-        {/* ONLY ADDITION */}
         <input
           type="number"
           placeholder="Price"
@@ -229,12 +299,14 @@ const AdminDashboard = () => {
 
         <br />
 
-        <button onClick={logout} className='btn btn-danger'>
+        <button
+          onClick={logout}
+          className='btn btn-danger'
+        >
           Logout
         </button>
 
       </div>
-
 
       <div className="card mt-4 p-3">
 
@@ -244,14 +316,14 @@ const AdminDashboard = () => {
 
           <div key={v.id}>
 
-             {v.number_plate} — {v.route_name} ({v.total_seats} seats)
+            {v.number_plate} — {v.route_name} ({v.total_seats} seats)
             {" "} @ {v.price}
 
             <br />
 
             <button
               className="btn btn-sm btn-danger mt-2"
-              onClick={() => removeVehicle(v.id)}
+              onClick={() => removeVehicle(v.id, v.number_plate)}
             >
               Delete
             </button>
