@@ -24,6 +24,28 @@ const Book = () => {
     return () => clearTimeout(timer);
   }, []);
 
+useEffect(() => {
+
+  const handleEnterKey = (e) => {
+
+    if (e.key === "Enter") {
+
+      handleSubmit({
+        preventDefault: () => {}
+      });
+
+    }
+
+  };
+
+  window.addEventListener("keydown", handleEnterKey);
+
+  return () => {
+    window.removeEventListener("keydown", handleEnterKey);
+  };
+
+}, [from, to]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const route = `${from}-${to}`;

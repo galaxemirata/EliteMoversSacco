@@ -203,6 +203,69 @@ const AdminDashboard = () => {
 
       <h1><b>ADMIN</b></h1>
 
+
+
+            <div className="card p-4" id='addvehicle'>
+
+        <p className='text-info'>ADD VEHICLE HERE</p>
+
+        <input
+          type="text"
+          placeholder="Number Plate"
+          className="form-control mb-2"
+          value={numberPlate}
+          onChange={(e) => setNumberPlate(e.target.value)}
+        />
+
+        <input
+          type="text"
+          placeholder="Driver Name"
+          className="form-control mb-2"
+          value={driverName}
+          onChange={(e) => setDriverName(e.target.value)}
+        />
+
+        <input
+          type="text"
+          placeholder="Route Name"
+          className="form-control mb-2"
+          value={routeName}
+          onChange={(e) => setRouteName(e.target.value)}
+        />
+
+        <input
+          type="number"
+          placeholder="Total Seats"
+          className="form-control mb-2"
+          value={totalSeats}
+          onChange={(e) => setTotalSeats(e.target.value)}
+        />
+
+        <input
+          type="number"
+          placeholder="Price"
+          className="form-control mb-2"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+        />
+
+        <button className="btn btn-info" onClick={addVehicle}>
+          Add
+        </button>
+
+        <br />
+
+        <button
+          onClick={logout}
+          className='btn btn-danger'
+        >
+          Logout
+        </button>
+
+      </div>
+      <br />
+
+
       <div className="mb-4">
 
         {Object.keys(
@@ -269,17 +332,24 @@ const AdminDashboard = () => {
 
               </div>
 
-              <button
-                className="btn btn-dark mt-2"
-                onClick={() =>
-                  printVehicleBookings(
-                    vehicle,
-                    currentVehicle?.driver_name
-                  )
-                }
-              >
-                Print Bookings
-              </button>
+<button
+  className="btn btn-dark mt-2"
+  disabled={
+    bookings.filter(b => b.number_plate === vehicle).length !== 17
+  }
+  onClick={() =>
+    printVehicleBookings(
+      vehicle,
+      currentVehicle?.driver_name
+    )
+  }
+>
+  {
+    bookings.filter(b => b.number_plate === vehicle).length === 17
+      ? "Print Bookings"
+      : `Waiting (${bookings.filter(b => b.number_plate === vehicle).length}/17)`
+  }
+</button>
 
             </div>
 
@@ -288,64 +358,7 @@ const AdminDashboard = () => {
 
       </div>
 
-      <div className="card p-4" id='addvehicle'>
 
-        <p className='text-info'>ADD VEHICLE HERE</p>
-
-        <input
-          type="text"
-          placeholder="Number Plate"
-          className="form-control mb-2"
-          value={numberPlate}
-          onChange={(e) => setNumberPlate(e.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Driver Name"
-          className="form-control mb-2"
-          value={driverName}
-          onChange={(e) => setDriverName(e.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Route Name"
-          className="form-control mb-2"
-          value={routeName}
-          onChange={(e) => setRouteName(e.target.value)}
-        />
-
-        <input
-          type="number"
-          placeholder="Total Seats"
-          className="form-control mb-2"
-          value={totalSeats}
-          onChange={(e) => setTotalSeats(e.target.value)}
-        />
-
-        <input
-          type="number"
-          placeholder="Price"
-          className="form-control mb-2"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-        />
-
-        <button className="btn btn-info" onClick={addVehicle}>
-          Add
-        </button>
-
-        <br />
-
-        <button
-          onClick={logout}
-          className='btn btn-danger'
-        >
-          Logout
-        </button>
-
-      </div>
 
       <div className="card mt-4 p-3">
 

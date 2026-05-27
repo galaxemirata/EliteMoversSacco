@@ -43,6 +43,25 @@ const Mpesa = () => {
     fetchPrice();
   }, [vehicle]);
 
+  useEffect(() => {
+
+  const handleEnterKey = (e) => {
+
+    if (e.key === "Enter" &&
+  e.target.tagName !== "TEXTAREA" && !loading) {
+      handlePayment();
+    }
+
+  };
+
+  window.addEventListener("keydown", handleEnterKey);
+
+  return () => {
+    window.removeEventListener("keydown", handleEnterKey);
+  };
+
+}, [phone, pickup, seats, vehicle, pricePerSeat, loading]);
+
   // ================= SEAT SYNC =================
   const syncSeats = () => {
     window.dispatchEvent(new Event("seat-sync"));

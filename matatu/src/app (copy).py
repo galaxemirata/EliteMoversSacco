@@ -107,10 +107,11 @@ def mpesa_payment():
         amount = data.get('amount')
         phone = data.get('phone')
 
-        # ✅ FIXED
+        # ✅ VEHICLE
         vehicle = data.get('vehicle')
 
-        seat = ",".join(data.get('seats'))
+        # ✅ GET ALL SELECTED SEATS
+        seats = data.get('seats')
 
         pickup = data.get('pickup_location')
 
@@ -208,15 +209,18 @@ def mpesa_payment():
                 VALUES(%s,%s,%s,%s,%s,%s,%s)
             """
 
-            cursor.execute(insert_query, (
-                vehicle,
-                seat,
-                phone,
-                seat_price,
-                route_name,
-                pickup,
-                "Pending"
-            ))
+            # ✅ SAVE EACH SEAT SEPARATELY
+            for seat in seats:
+
+                cursor.execute(insert_query, (
+                    vehicle,
+                    seat,
+                    phone,
+                    seat_price,
+                    route_name,
+                    pickup,
+                    "Pending"
+                ))
 
             connection.commit()
 

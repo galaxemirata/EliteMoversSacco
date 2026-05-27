@@ -67,6 +67,25 @@ const IsioloMombasa = () => {
     }
   }, [paidSeats, vehicles.length, totalSeats]);
 
+
+  useEffect(() => {
+
+  const handleEnterKey = (e) => {
+
+    if (e.key === "Enter") {
+      handleDone();
+    }
+
+  };
+
+  window.addEventListener("keydown", handleEnterKey);
+
+  return () => {
+    window.removeEventListener("keydown", handleEnterKey);
+  };
+
+}, [selectedSeats, vehicle]);
+
   const handleSeatSelection = (seat) => {
     setSelectedSeats((prev) => {
       if (prev.includes(seat)) {
