@@ -11,6 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 
+
 # ==============================
 # SIGNUP API
 # ==============================
@@ -21,6 +22,7 @@ def signup():
     email = request.form["email"]
     password = request.form["password"]
     phone = request.form["phone"]
+    profilePic = request.form["profilePic"]
 
     connection = pymysql.connect(
         user="root",
@@ -32,15 +34,20 @@ def signup():
     cursor = connection.cursor()
 
     sql = """
-    INSERT INTO signup(username,password,email,phone)
-    VALUES(%s,%s,%s,%s)
+    INSERT INTO signup(username,password,email,phone,profilePic)
+    VALUES(%s,%s,%s,%s,%s)
     """
 
-    cursor.execute(sql, (username, password, email, phone))
+    cursor.execute(
+        sql,
+        (username, password, email, phone, profilePic)
+    )
+
     connection.commit()
 
-    return jsonify({"message": "Thankyou for joining"})
-
+    return jsonify({
+        "message": "Thankyou for joining"
+    })
 
 # ==============================
 # SIGNIN API
@@ -302,6 +309,9 @@ def add_vehicle():
     total_seats = data.get('total_seats')
     price = data.get('price')
 
+    # ✅ NECESSARY FIX ONLY
+    admin_email = data.get('admin_email')
+
     connection = pymysql.connect(
         host="localhost",
         user="root",
@@ -317,15 +327,17 @@ def add_vehicle():
             driver_name,
             route_name,
             total_seats,
-            price
+            price,
+            admin_email
         )
-        VALUES(%s,%s,%s,%s,%s)
+        VALUES(%s,%s,%s,%s,%s,%s)
     """, (
         number_plate,
         driver_name,
         route_name,
         total_seats,
-        price
+        price,
+        admin_email
     ))
 
     connection.commit()
@@ -450,11 +462,11 @@ def remove_vehicle(vehicle_id):
             database="matatu"
         )
 
-        cursor = connection.cursor()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-        # OPTIONAL: check if vehicle exists first
+        # GET VEHICLE
         cursor.execute(
-            "SELECT id FROM vehicles WHERE id=%s",
+            "SELECT number_plate FROM vehicles WHERE id=%s",
             (vehicle_id,)
         )
 
@@ -465,6 +477,14 @@ def remove_vehicle(vehicle_id):
                 "success": False,
                 "message": "Vehicle not found"
             }), 404
+
+        number_plate = vehicle["number_plate"]
+
+        # DELETE ALL BOOKINGS FOR THIS VEHICLE
+        cursor.execute(
+            "DELETE FROM bookings WHERE number_plate=%s",
+            (number_plate,)
+        )
 
         # DELETE VEHICLE
         cursor.execute(
@@ -479,7 +499,7 @@ def remove_vehicle(vehicle_id):
 
         return jsonify({
             "success": True,
-            "message": "Vehicle removed successfully"
+            "message": "Vehicle and its bookings removed successfully"
         })
 
     except Exception as e:
@@ -490,8 +510,6 @@ def remove_vehicle(vehicle_id):
             "success": False,
             "message": str(e)
         }), 500
-    
-
     # ==============================
 # ADMIN BOOKINGS API
 # ==============================
@@ -520,6 +538,41 @@ def admin_bookings():
     connection.close()
 
     return jsonify(bookings)
+
+
+
+@app.route("/api/update-profile-pic", methods=["POST"])
+def update_profile_pic():
+    data = request.get_json()
+
+    email = data.get("email")
+    profile_pic = data.get("profilePic")
+
+    connection = pymysql.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="matatu"   # ✅ FIX: was "your_db"
+    )
+
+    cursor = connection.cursor()
+
+    sql = """
+        UPDATE signup
+        SET profilePic = %s
+        WHERE email = %s
+    """
+
+    cursor.execute(sql, (profile_pic, email))
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({
+        "message": "Profile updated successfully",
+        "profilePic": profile_pic
+    })
 
 
 # RUN APP

@@ -70,7 +70,7 @@ function ChatBot() {
   return (
     <div>
       <button
-        className="btn btn-info chatbot-btn"
+        className="btn btn-info chatbot-btn" style={{borderRadius: 40}}
         onClick={() => setOpen(!open)}
       >
         Help

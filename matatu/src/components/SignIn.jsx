@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const SignIn = ({ setUser }) => {
@@ -16,12 +16,11 @@ const SignIn = ({ setUser }) => {
 
   const submit = async (e) => {
     e.preventDefault();
-
     if (loading) return;
 
     if (!email || !password) {
-      setSuccess("");
       setError("Please fill all fields");
+      setSuccess("");
       return;
     }
 
@@ -39,19 +38,28 @@ const SignIn = ({ setUser }) => {
         formData
       );
 
-      if (response?.data?.user) {
-        localStorage.setItem(
-          "user",
-          JSON.stringify(response.data.user)
-        );
+      const backendUser = response?.data?.user;
 
-        localStorage.setItem(
-          "username",
-          response.data.user.username
-        );
+      if (backendUser) {
+        const existingUser =
+          JSON.parse(localStorage.getItem("user")) || {};
 
-        // FIX: update App state instantly
-        setUser(response.data.user);
+        // 🔥 SAFE USER MERGE (IMPORTANT FIX)
+        const safeUser = {
+          username: backendUser.username,
+          email: backendUser.email,
+          phone: backendUser.phone || "",
+          profilePic:
+            backendUser.profilePic ||
+            existingUser.profilePic ||
+            "",
+        };
+
+        localStorage.setItem("user", JSON.stringify(safeUser));
+        localStorage.setItem("username", backendUser.username);
+
+        // 🔥 instant navbar update
+        setUser(safeUser);
 
         setSuccess(
           response.data.message || "Login successful"
@@ -62,19 +70,16 @@ const SignIn = ({ setUser }) => {
 
         setTimeout(() => {
           navigate("/");
-        }, 1500);
-
+        }, 1200);
       } else {
         setError(
-          response.data.message ||
-          "Invalid login credentials"
+          response?.data?.message || "Invalid login credentials"
         );
       }
-
-    } catch (error) {
+    } catch (err) {
       setError(
-        error.response?.data?.message ||
-        "Something went wrong. Try again."
+        err.response?.data?.message ||
+          "Something went wrong"
       );
     } finally {
       setLoading(false);
@@ -88,75 +93,44 @@ const SignIn = ({ setUser }) => {
         style={{ borderRadius: 30 }}
         id="signin"
       >
-        <h3
-          className="text-center text-info mb-4"
-          id="signinhead"
-        >
+        <h3 className="text-center text-info mb-4" id="signinhead">
           Sign In
         </h3>
 
         <form onSubmit={submit}>
-          {loading && (
-            <p className="text-warning">
-              Please wait...
-            </p>
-          )}
-
-          {success && (
-            <div className="alert alert-success">
-              {success}
-            </div>
-          )}
-
-          {error && (
-            <div className="alert alert-danger">
-              {error}
-            </div>
-          )}
+          {error && <div className="alert alert-danger">{error}</div>}
+          {success && <div className="alert alert-success">{success}</div>}
 
           <input
             type="email"
             placeholder="Enter Email"
             className="form-control"
             value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <br />
 
           <div style={{ position: "relative" }}>
             <input
-              type={
-                showPassword
-                  ? "text"
-                  : "password"
-              }
+              type={showPassword ? "text" : "password"}
               placeholder="Enter Password"
               className="form-control"
               value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
+              onChange={(e) => setPassword(e.target.value)}
             />
 
             <span
-              onClick={() =>
-                setShowPassword(!showPassword)
-              }
+              onClick={() => setShowPassword(!showPassword)}
               style={{
                 position: "absolute",
                 right: "10px",
                 top: "50%",
-                transform:
-                  "translateY(-50%)",
-                cursor: "pointer"
+                transform: "translateY(-50%)",
+                cursor: "pointer",
               }}
             >
-              {showPassword
-                ? <FaEye />
-                : <FaEyeSlash />}
+              {showPassword ? <FaEye /> : <FaEyeSlash />}
             </span>
           </div>
 
@@ -185,10 +159,7 @@ const SignIn = ({ setUser }) => {
             <b>Don't have an account?</b>
           </p>
 
-          <Link
-            to="/signup"
-            className="text-primary"
-          >
+          <Link to="/signup" className="text-primary">
             <b>Sign Up</b>
           </Link>
         </form>

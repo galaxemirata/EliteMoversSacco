@@ -43,11 +43,7 @@
   }
 }
 
-.navlink{
-  text-decoration: none;
-  padding-left: 30px;
-  padding-right: 10px;
-}
+
 
 
 .img{
@@ -196,6 +192,7 @@
   padding: 10px 20px;
   flex-wrap: wrap;
   gap: 15px;
+  position: relative;
 }
 
 /* LEFT */
@@ -223,19 +220,7 @@
   text-align: center;
 }
 
-/* RIGHT */
 
-.nav-right{
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.navlink{
-  text-decoration: none;
-  font-size: 16px;
-}
 
 /* LOGO */
 
@@ -251,6 +236,7 @@
   .navbar-custom{
     flex-direction: column;
     text-align: center;
+    
   }
 
   .nav-center{
@@ -262,9 +248,7 @@
     letter-spacing: 4px;
   }
 
-  .nav-right{
-    justify-content: center;
-  }
+
 }
 
 #numberplate{
@@ -275,17 +259,98 @@
   background-color: black;
 }
 
-/* ADMIN LINK */
 
-.admin-link {
-  text-decoration: none;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
-  transition: 0.3s;
-  margin-left: 8px;
+
+#commentsectiontext{
+  background-color: black;
+  color: aquamarine;
 }
 
-.admin-link:hover {
-  color: aqua;
-  opacity: 1;
+#commentscard{
+  background-color: black;
+}
+
+#submitcomment{
+  background-color: aquamarine;
+}
+
+#commentcard{
+  background-color: black;
+}
+
+#usercomments{
+  background-color: black;
+  color: azure;
+}
+
+/* HAMBURGER MENU */
+
+.hamburger-btn{
+  display:none;
+  border:none;
+  background:transparent;
+  color:aqua;
+  font-size:32px;
+  cursor:pointer;
+}
+
+@media (max-width:768px){
+
+  .navbar-custom{
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .nav-center{
+    flex:1;
+  }
+
+  .hamburger-btn{
+    display:block;
+    margin-left:auto;
+  }
+
+
+
+
+  #h1main{
+    font-size:1.2rem;
+    letter-spacing:2px;
+  }
+}
+
+/* RIGHT */
+
+.nav-right{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  flex-wrap:wrap;
+}
+
+.navlink{
+  text-decoration:none;
+  font-size:16px;
+  padding:8px 12px;
+  transition:0.3s;
+}
+
+.navlink:hover{
+  color:aqua;
+}
+
+
+/* ADMIN LINK */
+
+.admin-link{
+  text-decoration:none;
+  font-size:12px;
+  color:rgba(255,255,255,0.4);
+  transition:0.3s;
+  margin-left:5px;
+}
+
+.admin-link:hover{
+  color:aqua;
 }

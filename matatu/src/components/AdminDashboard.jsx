@@ -11,6 +11,10 @@ const AdminDashboard = () => {
   const [totalSeats, setTotalSeats] = useState("")
   const [price, setPrice] = useState("")
 
+  // ✅ CURRENT ADMIN
+  const storedAdmin = JSON.parse(localStorage.getItem("admin"))
+  const currentAdminEmail = storedAdmin?.email
+
   // FETCH BOOKINGS
   const fetchBookings = async () => {
 
@@ -71,7 +75,10 @@ const AdminDashboard = () => {
             driver_name: driverName,
             route_name: routeName,
             total_seats: Number(totalSeats),
-            price: Number(price)
+            price: Number(price),
+
+            // ✅ NECESSARY FIX ONLY
+            admin_email: currentAdminEmail
           })
         }
       )
@@ -203,9 +210,7 @@ const AdminDashboard = () => {
 
       <h1><b>ADMIN</b></h1>
 
-
-
-            <div className="card p-4" id='addvehicle'>
+      <div className="card p-4" id='addvehicle'>
 
         <p className='text-info'>ADD VEHICLE HERE</p>
 
@@ -263,13 +268,25 @@ const AdminDashboard = () => {
         </button>
 
       </div>
-      <br />
 
+      <br />
 
       <div className="mb-4">
 
         {Object.keys(
           bookings.reduce((acc, b) => {
+
+            // ✅ SHOW ONLY CURRENT ADMIN VEHICLES
+            const vehicleOwner = vehicles.find(
+              v => v.number_plate === b.number_plate
+            )
+
+            if (
+              vehicleOwner?.admin_email &&
+              vehicleOwner.admin_email !== currentAdminEmail
+            ) {
+              return acc
+            }
 
             if (!acc[b.number_plate]) {
               acc[b.number_plate] = []
@@ -332,24 +349,26 @@ const AdminDashboard = () => {
 
               </div>
 
-<button
-  className="btn btn-dark mt-2"
-  disabled={
-    bookings.filter(b => b.number_plate === vehicle).length !== 17
-  }
-  onClick={() =>
-    printVehicleBookings(
-      vehicle,
-      currentVehicle?.driver_name
-    )
-  }
->
-  {
-    bookings.filter(b => b.number_plate === vehicle).length === 17
-      ? "Print Bookings"
-      : `Waiting (${bookings.filter(b => b.number_plate === vehicle).length}/17)`
-  }
-</button>
+              <button
+                className="btn btn-dark mt-2"
+                disabled={
+                  bookings.filter(b => b.number_plate === vehicle).length !== 17
+                }
+                onClick={() =>
+                  printVehicleBookings(
+                    vehicle,
+                    currentVehicle?.driver_name
+                  )
+                }
+              >
+                {
+                  bookings.filter(b => b.number_plate === vehicle).length === 17
+                    ? "Print Bookings"
+                    : `Waiting (${bookings.filter(
+                        b => b.number_plate === vehicle
+                      ).length}/17)`
+                }
+              </button>
 
             </div>
 
@@ -358,32 +377,36 @@ const AdminDashboard = () => {
 
       </div>
 
-
-
       <div className="card mt-4 p-3">
 
         <h4>Active Vehicles</h4>
 
-        {vehicles.map(v => (
+        {vehicles
+          .filter(
+            v =>
+              !v.admin_email ||
+              v.admin_email === currentAdminEmail
+          )
+          .map(v => (
 
-          <div key={v.id}>
+            <div key={v.id}>
 
-            {v.number_plate} — {v.driver_name} — {v.route_name}
-            ({v.total_seats} seats)
-            {" "} @ {v.price}
+              {v.number_plate} — {v.driver_name} — {v.route_name}
+              ({v.total_seats} seats)
+              {" "} @ {v.price}
 
-            <br />
+              <br />
 
-            <button
-              className="btn btn-sm btn-danger mt-2"
-              onClick={() => removeVehicle(v.id, v.number_plate)}
-            >
-              Delete
-            </button>
+              <button
+                className="btn btn-sm btn-danger mt-2"
+                onClick={() => removeVehicle(v.id, v.number_plate)}
+              >
+                Delete
+              </button>
 
-          </div>
+            </div>
 
-        ))}
+          ))}
 
       </div>
 
