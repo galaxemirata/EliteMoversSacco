@@ -52,44 +52,32 @@ function App() {
   const [user, setUser] = useState(() => {
     return JSON.parse(localStorage.getItem("user")) || null;
   });
-  
-const [menuOpen, setMenuOpen] = useState(false);
 
-const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
+  const menuRef = useRef(null);
+  const profileRef = useRef(null);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
 
-const menuRef = useRef(null);
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target)
+      ) {
+        setShowProfileMenu(false);
+      }
+    };
 
-const profileRef = useRef(null);
-
-useEffect(() => {
-  const handleClickOutside = (event) => {
-
-    if (
-      menuRef.current &&
-      !menuRef.current.contains(event.target)
-    ) {
-      setMenuOpen(false);
-    }
-
-    if (
-      profileRef.current &&
-      !profileRef.current.contains(event.target)
-    ) {
-      setShowProfileMenu(false);
-    }
-  };
-
-  document.addEventListener("mousedown", handleClickOutside);
-
-  return () => {
-    document.removeEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-  };
-}, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const logout = () => {
     localStorage.removeItem("user");
@@ -98,232 +86,203 @@ useEffect(() => {
     window.location.href = "/signin";
   };
 
-const changeProfilePicture = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const changeProfilePicture = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
+    const reader = new FileReader();
 
-  reader.onload = async () => {
-    const updatedUser = {
-      ...user,
-      profilePic: reader.result,
+    reader.onload = async () => {
+      const updatedUser = {
+        ...user,
+        profilePic: reader.result,
+      };
+
+      await axios.post("http://127.0.0.1:5000/api/update-profile-pic", {
+        email: user.email,
+        profilePic: reader.result,
+      });
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      const savedComments =
+        JSON.parse(localStorage.getItem("comments")) || [];
+
+      const updatedComments = savedComments.map((comment) =>
+        comment.owner === updatedUser.email
+          ? { ...comment, imageUrl: updatedUser.profilePic }
+          : comment
+      );
+
+      localStorage.setItem("comments", JSON.stringify(updatedComments));
+
+      const savedNotifications =
+        JSON.parse(localStorage.getItem("notifications")) || [];
+
+      const updatedNotifications = savedNotifications.map(
+        (notification) =>
+          notification.from === updatedUser.email
+            ? {
+                ...notification,
+                fromProfilePic: updatedUser.profilePic,
+              }
+            : notification
+      );
+
+      localStorage.setItem(
+        "notifications",
+        JSON.stringify(updatedNotifications)
+      );
+
+      setShowProfileMenu(false);
     };
 
-    // update DB
-    await axios.post("http://127.0.0.1:5000/api/update-profile-pic", {
-      email: user.email,
-      profilePic: reader.result,
-    });
-
-    // update local storage + UI
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    setUser(updatedUser);
-
-    // UPDATE EXISTING COMMENTS
-    const savedComments =
-      JSON.parse(localStorage.getItem("comments")) || [];
-
-    const updatedComments = savedComments.map((comment) =>
-      comment.owner === updatedUser.email
-        ? {
-            ...comment,
-            imageUrl: updatedUser.profilePic,
-          }
-        : comment
-    );
-
-    localStorage.setItem(
-      "comments",
-      JSON.stringify(updatedComments)
-    );
-
-    // UPDATE EXISTING NOTIFICATIONS
-    const savedNotifications =
-      JSON.parse(localStorage.getItem("notifications")) || [];
-
-    const updatedNotifications = savedNotifications.map(
-      (notification) =>
-        notification.from === updatedUser.email
-          ? {
-              ...notification,
-              fromProfilePic: updatedUser.profilePic,
-            }
-          : notification
-    );
-
-    localStorage.setItem(
-      "notifications",
-      JSON.stringify(updatedNotifications)
-    );
-
-    setShowProfileMenu(false);
+    reader.readAsDataURL(file);
   };
-
-  reader.readAsDataURL(file);
-};
 
   return (
     <div className="App">
       <Router>
+
         {/* NAVBAR */}
-<nav className="navbar-custom">
+        <nav className="navbar-custom">
 
-  {/* LEFT - ALWAYS VISIBLE */}
-  <div className="nav-left">
-    <Link to="/" className="logo-link">
-      <video
-        style={{ borderRadius: "50%" }}
-        src="images/elite movers (1).mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
-        width={80}
-      />
-    </Link>
+          {/* LEFT */}
+          <div className="nav-left">
+            <Link to="/" className="logo-link">
+              <video
+                style={{ borderRadius: "50%" }}
+                src="images/elite movers (1).mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                width={80}
+              />
+            </Link>
 
-    <ChatBot user={user} />
-  </div>
+            <ChatBot user={user} />
+          </div>
 
-  {/* CENTER */}
-  <div className="nav-center">
-    <h1 id="h1main">ELITE MOVERS SACCO</h1>
-  </div>
+          {/* CENTER */}
+          <div className="nav-center">
+            <h1 id="h1main">ELITE MOVERS SACCO</h1>
+          </div>
 
-  {/* MENU WRAPPER */}
-  <div ref={menuRef}>
+          {/* MENU WRAPPER FIXED */}
+          <div ref={menuRef} className="menu-wrapper">
 
-    <button
-      className="hamburger-btn"
-      onClick={() => setMenuOpen(!menuOpen)}
-    >
-      ☰
-    </button>
-
-    <div className={`nav-right ${menuOpen ? "show-menu" : ""}`}>
-
-      <Link to="/" className="btn btn-info text-white" style={{borderRadius: 40}}>
-        Book Now
-      </Link>
-
-      <Link to="/about" className="navlink text-info">
-        About
-      </Link>
-
-      <Link to="/comments" className="navlink text-info">
-        Comments
-      </Link>
-
-      {!user ? (
-        <Link to="/signin" className="navlink text-info">
-          Log In
-        </Link>
-      ) : (
-        <div ref={profileRef} style={{ position: "relative" }}>
-
-          {/* 👤 AVATAR WITH FALLBACK */}
-          {user?.profilePic ? (
-            <img
-              src={user.profilePic}
-              alt="Profile"
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              style={{
-                width: 45,
-                height: 45,
-                borderRadius: "50%",
-                objectFit: "cover",
-                cursor: "pointer",
-                border: "2px solid danger",
-              }}
-            />
-          ) : (
-            <div
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              style={{
-                width: 45,
-                height: 45,
-                borderRadius: "50%",
-                background: "red",
-                color: "black",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "bold",
-                cursor: "pointer",
-              }}
+            <button
+              className="hamburger-btn"
+              onClick={() => setMenuOpen(!menuOpen)}
             >
-              {user?.username?.charAt(0)?.toUpperCase() || "U"}
+              ☰
+            </button>
+
+            <div className={`nav-right ${menuOpen ? "show-menu" : ""}`}>
+
+              <Link to="/" className="btn btn-info text-white" style={{ borderRadius: 40 }}>
+                Book Now
+              </Link>
+
+              <Link to="/about" className="navlink text-info">About</Link>
+              <Link to="/comments" className="navlink text-info">Comments</Link>
+
+              {!user ? (
+                <Link to="/signin" className="navlink text-info">Log In</Link>
+              ) : (
+                <div ref={profileRef} style={{ position: "relative" }}>
+
+                  {user?.profilePic ? (
+                    <img
+                      src={user.profilePic}
+                      alt="Profile"
+                      onClick={() => setShowProfileMenu(!showProfileMenu)}
+                      style={{
+                        width: 45,
+                        height: 45,
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        cursor: "pointer",
+                        border: "2px solid red",
+                      }}
+                    />
+                  ) : (
+                    <div
+                      onClick={() => setShowProfileMenu(!showProfileMenu)}
+                      style={{
+                        width: 45,
+                        height: 45,
+                        borderRadius: "50%",
+                        background: "red",
+                        color: "black",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {user?.username?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
+                  )}
+
+                  {showProfileMenu && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 55,
+                        right: 0,
+                        background: "black",
+                        padding: 10,
+                        borderRadius: 10,
+                        minWidth: 180,
+                        zIndex: 9999,
+                      }}
+                    >
+                      <p className="text-info mb-2">{user.username}</p>
+
+                      <button
+                        className="btn btn-info btn-sm w-100 mb-2"
+                        onClick={() =>
+                          document.getElementById("profile-upload").click()
+                        }
+                      >
+                        Change Profile Picture
+                      </button>
+
+                      <button
+                        onClick={logout}
+                        className="btn btn-danger btn-sm w-100"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+              <Link to="/admin" className="admin-link">Admin</Link>
             </div>
-          )}
+          </div>
 
-          {/* DROPDOWN */}
-          {showProfileMenu && (
-            <div
-              style={{
-                position: "absolute",
-                top: 55,
-                right: 0,
-                background: "black",
-                padding: 10,
-                borderRadius: 10,
-                minWidth: 180,
-                zIndex: 9999,
-              }}
-            >
-              <p className="text-info mb-2">
-                {user.username}
-              </p>
+          <input
+            type="file"
+            id="profile-upload"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={changeProfilePicture}
+          />
 
-              <button
-                className="btn btn-info btn-sm w-100 mb-2"
-                onClick={() =>
-                  document.getElementById("profile-upload").click()
-                }
-              >
-                Change Profile Picture
-              </button>
+        </nav>
 
-              <button
-                onClick={logout}
-                className="btn btn-danger btn-sm w-100"
-              >
-                Logout
-              </button>
-            </div>
-          )}
-
-        </div>
-      )}
-
-      <Link to="/admin" className="admin-link">
-        Admin
-      </Link>
-    </div>
-
-  </div>
-
-  {/* FILE INPUT */}
-  <input
-    type="file"
-    id="profile-upload"
-    accept="image/*"
-    style={{ display: "none" }}
-    onChange={changeProfilePicture}
-  />
-
-</nav>
-        <br />
-        <br />
-        <br />
-     
+        <br /><br /><br />
 
         <Routes>
           <Route path="/" element={<Book />} />
-
-          {/* FIX: pass setUser */}
           <Route path="/signin" element={<SignIn setUser={setUser} />} />
-
           <Route path="/signup" element={<SignUp />} />
           <Route path="/about" element={<About />} />
           <Route path="/mpesa" element={<Mpesa />} />
@@ -355,7 +314,6 @@ const changeProfilePicture = async (e) => {
           <Route path="/nanyuki-mombasa" element={<NanyukiMombasa />} />
 
           <Route path="/comments" element={<Comments />} />
-
           <Route path="/lamu-nairobi" element={<LamuNairobi />} />
 
           <Route
@@ -366,14 +324,12 @@ const changeProfilePicture = async (e) => {
           <Route
             path="/admin"
             element={
-              admin ? (
-                <AdminDashboard />
-              ) : (
-                <AdminSignIn setAdmin={setAdmin} />
-              )
+              admin ? <AdminDashboard /> : <AdminSignIn setAdmin={setAdmin} />
             }
           />
+
         </Routes>
+
       </Router>
     </div>
   );

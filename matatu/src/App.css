@@ -1,6 +1,6 @@
 .App {
   text-align: center;
-  background: 
+  background:
     linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6)),
     url('/public/images/bgmatatu2.jpg') center/cover no-repeat;
   min-height: 100vh;
@@ -27,7 +27,6 @@
   font-size: calc(10px + 2vmin);
   color: white;
   font-family: sans-serif;
-  
 }
 
 .App-link {
@@ -43,75 +42,74 @@
   }
 }
 
+/* GENERAL SPACING */
 
-
-
-.img{
+.img {
   padding-right: 10px;
 }
 
-
-.s7{
+.s7 {
   margin-right: 10px;
 }
 
-.s10{
+.s10 {
   margin-right: 10px;
 }
 
-.s0{
+.s0 {
   margin-left: -27px;
 }
 
-
-
-
-.card{
+.card {
   background-color: black;
 }
 
-
-
-.h1main{
+.h1main {
   font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
+/* AUTH / SECTIONS */
 
-
-#signin{
+#signin,
+#signup,
+#bookcard,
+#mpesacard,
+#addvehicle,
+#aboutcontainer,
+#numberplate,
+#commentscard,
+#commentcard {
   background-color: black;
 }
 
-#signup{
-  background-color: black;
-}
-
-#signinhead{
+#signinhead,
+#createaccount {
   color: aqua;
 }
 
-#h1main{
-  color: aqua;
-}
-
-#createaccount{
-  color: aqua;
-}
-
-#bookcard{
+#commentsectiontext {
   background-color: black;
+  color: aquamarine;
 }
 
-#mpesacard{
-  background-color: black;
+#submitcomment {
+  background-color: aquamarine;
 }
+
+#usercomments {
+  background-color: black;
+  color: azure;
+}
+
+/* PRINT */
 
 @media print {
   body * {
     visibility: hidden;
   }
 
-  #printArea, #printArea * {
+  #printArea,
+  #printArea * {
     visibility: visible;
   }
 
@@ -123,15 +121,13 @@
   }
 }
 
-#addvehicle{
-  background-color: black;
-}
+/* CHATBOT */
 
-.chatbot-btn{
+.chatbot-btn {
   height: 45px;
 }
 
-.chatbot-container{
+.chatbot-container {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -143,21 +139,21 @@
   z-index: 1000;
 }
 
-.chatbot-header{
+.chatbot-header {
   background: #0dcaf0;
   color: white;
   padding: 10px;
   font-weight: bold;
 }
 
-.chatbot-body{
+.chatbot-body {
   height: 300px;
   overflow-y: auto;
   padding: 10px;
   background: #f5f5f5;
 }
 
-.user-message{
+.user-message {
   background: #0dcaf0;
   color: white;
   padding: 8px;
@@ -166,191 +162,146 @@
   text-align: right;
 }
 
-.bot-message{
+.bot-message {
   background: #e4e6eb;
   padding: 8px;
   border-radius: 10px;
   margin-bottom: 10px;
 }
 
-.chatbot-footer{
+.chatbot-footer {
   padding: 10px;
   background: white;
 }
 
-#aboutcontainer{
-  background-color: black;
-}
+/* =========================
+   NAVBAR (CLEAN FIXED VERSION)
+========================= */
 
-/* NAVBAR */
-
-.navbar-custom{
+.navbar-custom {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  background-color: black;
   padding: 10px 20px;
-  flex-wrap: wrap;
-  gap: 15px;
+  background-color: black;
   position: relative;
+  flex-wrap: wrap;
 }
 
-/* LEFT */
-
-.nav-left{
+.nav-left,
+.nav-center {
   display: flex;
   align-items: center;
-  gap: 15px;
 }
 
-/* CENTER */
-
-.nav-center{
+.nav-center {
   flex: 1;
-  display: flex;
   justify-content: center;
 }
 
-#h1main{
-  color: aqua;
-  font-family: Georgia, 'Times New Roman', Times, serif;
-  letter-spacing: 8px;
-  margin: 0;
-  font-size: 2rem;
-  text-align: center;
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
+#h1main {
+  color: aqua;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  letter-spacing: 4px;
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1rem, 3vw, 2rem);
+}
 
-
-/* LOGO */
-
-.logo-link img{
+.logo-link img {
   max-width: 100%;
   height: auto;
 }
 
-/* RESPONSIVE */
+.navlink {
+  text-decoration: none;
+  font-size: 16px;
+  padding: 8px 12px;
+  transition: 0.3s;
+}
 
-@media (max-width: 768px){
+.navlink:hover {
+  color: aqua;
+}
 
-  .navbar-custom{
-    flex-direction: column;
-    text-align: center;
-    
-  }
+.admin-link {
+  text-decoration: none;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  transition: 0.3s;
+  margin-left: 5px;
+}
 
-  .nav-center{
+.admin-link:hover {
+  color: aqua;
+}
+
+.hamburger-btn {
+  display: none;
+  font-size: 28px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #17a2b8;
+}
+
+/* MOBILE FIX (IMPORTANT FIX HERE) */
+
+@media (max-width: 768px) {
+
+  .hamburger-btn {
+    display: block;
     order: -1;
+    margin-right: auto;
   }
 
-  #h1main{
-    font-size: 1.5rem;
-    letter-spacing: 4px;
+  .nav-center {
+    flex: 1;
+    text-align: center;
   }
 
-
-}
-
-#numberplate{
-  background-color: black;
-}
-
-#mpesacard{
-  background-color: black;
-}
-
-
-
-#commentsectiontext{
-  background-color: black;
-  color: aquamarine;
-}
-
-#commentscard{
-  background-color: black;
-}
-
-#submitcomment{
-  background-color: aquamarine;
-}
-
-#commentcard{
-  background-color: black;
-}
-
-#usercomments{
-  background-color: black;
-  color: azure;
-}
-
-/* HAMBURGER MENU */
-
-.hamburger-btn{
-  display:none;
-  border:none;
-  background:transparent;
-  color:aqua;
-  font-size:32px;
-  cursor:pointer;
-}
-
-@media (max-width:768px){
-
-  .navbar-custom{
-    flex-direction:row;
-    align-items:center;
-    justify-content:space-between;
+  #h1main {
+    font-size: 18px;
+    letter-spacing: 2px;
   }
 
-  .nav-center{
-    flex:1;
+  /* FIXED DROPDOWN (NO OVERFLOW) */
+  .nav-right {
+    position: absolute;
+    top: 100%;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: 280px;
+
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.2);
+
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 15px;
+
+    z-index: 9999;
+    overflow: hidden;
   }
 
-  .hamburger-btn{
-    display:block;
-    margin-left:auto;
+  .nav-right.show-menu {
+    display: flex;
   }
 
-
-
-
-  #h1main{
-    font-size:1.2rem;
-    letter-spacing:2px;
+  .nav-right a,
+  .nav-right button {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
   }
-}
-
-/* RIGHT */
-
-.nav-right{
-  display:flex;
-  align-items:center;
-  gap:20px;
-  flex-wrap:wrap;
-}
-
-.navlink{
-  text-decoration:none;
-  font-size:16px;
-  padding:8px 12px;
-  transition:0.3s;
-}
-
-.navlink:hover{
-  color:aqua;
-}
-
-
-/* ADMIN LINK */
-
-.admin-link{
-  text-decoration:none;
-  font-size:12px;
-  color:rgba(255,255,255,0.4);
-  transition:0.3s;
-  margin-left:5px;
-}
-
-.admin-link:hover{
-  color:aqua;
 }
