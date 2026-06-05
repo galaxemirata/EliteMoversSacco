@@ -11,10 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-
-# ==============================
-# SIGNUP API
-# ==============================
+# SIGNUP
 @app.route("/api/signup", methods=["POST"])
 def signup():
 
@@ -23,6 +20,14 @@ def signup():
     password = request.form["password"]
     phone = request.form["phone"]
     profilePic = request.form["profilePic"]
+
+    # ==========================
+    # PHONE VALIDATION (FIX ONLY)
+    # ==========================
+    if not phone.isdigit():
+        return jsonify({
+            "error": "Phone number must contain digits only"
+        }), 400
 
     connection = pymysql.connect(
         user="root",
