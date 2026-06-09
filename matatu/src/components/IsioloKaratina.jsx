@@ -38,26 +38,46 @@ const IsioloKaratina = () => {
   // FIX: Remaining empty seats
   const remainingSeats = totalSeats - paidSeats.length;
 
-  const routeKey = vehicle
-    ? `${location.pathname}:${vehicle.number_plate}`
-    : location.pathname;
 
-  const loadSeats = () => {
-    const stored =
-      JSON.parse(localStorage.getItem(`paidSeats:${routeKey}`)) || [];
-    setPaidSeats(stored);
+const loadSeats = async () => {
+
+  if (!vehicle?.number_plate) return;
+
+  try {
+
+    const res = await fetch(
+      `http://localhost:5000/api/paid_seats/${vehicle.number_plate}`
+    );
+
+    const data = await res.json();
+
+    setPaidSeats(data);
+
+  } catch (err) {
+
+    console.log(err);
+
+  }
+
+};
+
+useEffect(() => {
+
+  if (!vehicle) return;
+
+  // Initial load
+  loadSeats();
+
+  // Auto refresh every 5 seconds
+  const interval = setInterval(() => {
+    loadSeats();
+  }, 5000);
+
+  return () => {
+    clearInterval(interval);
   };
 
-  useEffect(() => {
-    if (!vehicle) return;
-
-    loadSeats();
-
-    const sync = () => loadSeats();
-    window.addEventListener("seat-sync", sync);
-
-    return () => window.removeEventListener("seat-sync", sync);
-  }, [routeKey, vehicle]);
+}, [vehicle]);
 
   useEffect(() => {
     if (paidSeats.length >= totalSeats) {
@@ -95,14 +115,38 @@ const IsioloKaratina = () => {
     });
   };
 
-  const handleDone = () => {
-    if (selectedSeats.length === 0) {
-      alert("Please select at least one seat");
-      return;
-    }
+const handleDone = async () => {
 
-    if (!vehicle?.number_plate) {
-      alert("Please wait as the vehicle gets uploaded..");
+  if (selectedSeats.length === 0) {
+    alert("Please select at least one seat");
+    return;
+  }
+
+  if (!vehicle?.number_plate) {
+    alert("Please wait as the vehicle gets uploaded..");
+    return;
+  }
+
+  try {
+
+    const latest = await fetch(
+      `http://localhost:5000/api/paid_seats/${vehicle.number_plate}`
+    );
+
+    const latestPaidSeats = await latest.json();
+
+    const alreadyBooked = selectedSeats.some(
+      (seat) => latestPaidSeats.includes(seat)
+    );
+
+    if (alreadyBooked) {
+
+      alert(
+        "One or more selected seats were just booked. Please choose another seat."
+      );
+
+      loadSeats();
+
       return;
     }
 
@@ -113,8 +157,16 @@ const IsioloKaratina = () => {
         vehicle: vehicle.number_plate,
       },
     });
-  };
 
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Unable to verify seats. Please try again.");
+
+  }
+
+};
   const seatStyle = (seat) => {
     const isPaid = paidSeats.includes(seat);
     const isSelected = selectedSeats.includes(seat);

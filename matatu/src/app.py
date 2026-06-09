@@ -28,13 +28,7 @@ def signup():
         return jsonify({
             "error": "Phone number must contain digits only"
         }), 400
-
-    connection = pymysql.connect(
-        user="root",
-        host="localhost",
-        password="",
-        database="matatu"
-    )
+    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
     cursor = connection.cursor()
 
@@ -65,12 +59,7 @@ def signin():
     email = data.get("email")
     password = data.get("password")
 
-    connection = pymysql.connect(
-        user="root",
-        host="localhost",
-        password="",
-        database="matatu"
-    )
+    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
@@ -97,16 +86,16 @@ import traceback
 
 def get_db():
     return pymysql.connect(
-        user="root",
-        host="localhost",
-        password="",
-        database="matatu",
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
         cursorclass=pymysql.cursors.DictCursor
     )
 
 
 from flask import request, jsonify
-
+connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
 @app.route('/api/mpesa_payment', methods=['POST'])
 def mpesa_payment():
@@ -199,12 +188,7 @@ def mpesa_payment():
         # =============================
         try:
 
-            connection = pymysql.connect(
-                host="localhost",
-                user="root",
-                password="",
-                database="matatu"
-            )
+            connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
             cursor = connection.cursor()
 
@@ -264,15 +248,15 @@ def mpesa_cancel():
 def vehicle_status(vehicle_id):
 
     connection = pymysql.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="matatu"
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
     )
 
-    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    cursor = connection.cursor()
 
-    # total seats
     cursor.execute("""
         SELECT total_seats, number_plate
         FROM vehicles
@@ -281,23 +265,22 @@ def vehicle_status(vehicle_id):
 
     vehicle = cursor.fetchone()
 
-    # booked seats
     cursor.execute("""
         SELECT COUNT(*) as booked
         FROM bookings
-        WHERE vehicle_id=%s
-    """, (vehicle_id,))
+        WHERE number_plate=%s
+    """, (vehicle["number_plate"],))
 
     booked = cursor.fetchone()
 
     cursor.close()
     connection.close()
 
-    total = vehicle['total_seats']
-    booked_count = booked['booked']
+    total = vehicle["total_seats"]
+    booked_count = booked["booked"]
 
     return jsonify({
-        "vehicle": vehicle['number_plate'],
+        "vehicle": vehicle["number_plate"],
         "total_seats": total,
         "booked_seats": booked_count,
         "is_full": booked_count >= total
@@ -317,12 +300,7 @@ def add_vehicle():
     # ✅ NECESSARY FIX ONLY
     admin_email = data.get('admin_email')
 
-    connection = pymysql.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="matatu"
-    )
+    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
     cursor = connection.cursor()
 
@@ -357,13 +335,7 @@ def add_vehicle():
 @app.route('/api/vehicles')
 def vehicles():
 
-    connection = pymysql.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="matatu"
-    )
-
+    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
     cursor = connection.cursor(
         pymysql.cursors.DictCursor
     )
@@ -380,32 +352,28 @@ def vehicles():
 
     return jsonify(vehicles)
 
-@app.route('/api/booked_seats/<int:vehicle_id>')
-def booked_seats(vehicle_id):
+@app.route('/api/booked_seats/<number_plate>')
+def booked_seats(number_plate):
 
     connection = pymysql.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="matatu"
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
     )
 
-    cursor = connection.cursor(
-        pymysql.cursors.DictCursor
-    )
+    cursor = connection.cursor()
 
     cursor.execute("""
         SELECT seat_number
         FROM bookings
-        WHERE vehicle_id=%s
-    """, (vehicle_id,))
+        WHERE number_plate=%s
+    """, (number_plate,))
 
     rows = cursor.fetchall()
 
-    seats = [
-        row['seat_number']
-        for row in rows
-    ]
+    seats = [row["seat_number"] for row in rows]
 
     cursor.close()
     connection.close()
@@ -420,12 +388,7 @@ def adminsignin():
     email = data.get("email")
     password = data.get("password")
 
-    connection = pymysql.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="matatu"
-    )
+    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
@@ -460,12 +423,7 @@ def remove_vehicle(vehicle_id):
 
     try:
 
-        connection = pymysql.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="matatu"
-        )
+        connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
         cursor = connection.cursor(pymysql.cursors.DictCursor)
 
@@ -522,13 +480,7 @@ def remove_vehicle(vehicle_id):
 @app.route('/api/admin/bookings', methods=['GET'])
 def admin_bookings():
 
-    connection = pymysql.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="matatu",
-        cursorclass=pymysql.cursors.DictCursor
-    )
+    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
     cursor = connection.cursor()
 
@@ -553,12 +505,7 @@ def update_profile_pic():
     email = data.get("email")
     profile_pic = data.get("profilePic")
 
-    connection = pymysql.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="matatu"   # ✅ FIX: was "your_db"
-    )
+    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
 
     cursor = connection.cursor()
 
@@ -580,6 +527,35 @@ def update_profile_pic():
     })
 
 
+@app.route('/api/paid_seats/<number_plate>')
+def paid_seats(number_plate):
+
+    connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT seat_number
+        FROM bookings
+        WHERE number_plate=%s
+    """, (number_plate,))
+
+    rows = cursor.fetchall()
+
+    seats = [row["seat_number"] for row in rows]
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(seats)
+
+
 # RUN APP
 
-app.run(debug=True)
+# app.run(debug=True)

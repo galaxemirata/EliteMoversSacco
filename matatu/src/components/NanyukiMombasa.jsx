@@ -36,14 +36,19 @@ const NanyukiMombasa = () => {
   const totalSeats = seatRows.flat().filter((s) => s !== "aisle").length;
   const remainingSeats = totalSeats - paidSeats.length;
 
-  const routeKey = vehicle
-    ? `${location.pathname}:${vehicle.number_plate}`
-    : location.pathname;
+  const loadSeats = async () => {
+    if (!vehicle?.number_plate) return;
 
-  const loadSeats = () => {
-    const stored =
-      JSON.parse(localStorage.getItem(`paidSeats:${routeKey}`)) || [];
-    setPaidSeats(stored);
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/paid_seats/${vehicle.number_plate}`
+      );
+
+      const data = await res.json();
+      setPaidSeats(data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
@@ -51,11 +56,12 @@ const NanyukiMombasa = () => {
 
     loadSeats();
 
-    const sync = () => loadSeats();
-    window.addEventListener("seat-sync", sync);
+    const interval = setInterval(() => {
+      loadSeats();
+    }, 5000);
 
-    return () => window.removeEventListener("seat-sync", sync);
-  }, [routeKey, vehicle]);
+    return () => clearInterval(interval);
+  }, [vehicle]);
 
   useEffect(() => {
     if (paidSeats.length >= totalSeats) {
@@ -66,22 +72,14 @@ const NanyukiMombasa = () => {
   }, [paidSeats, vehicles.length, totalSeats]);
 
   useEffect(() => {
+    const handleEnterKey = (e) => {
+      if (e.key === "Enter") handleDone();
+    };
 
-  const handleEnterKey = (e) => {
+    window.addEventListener("keydown", handleEnterKey);
 
-    if (e.key === "Enter") {
-      handleDone();
-    }
-
-  };
-
-  window.addEventListener("keydown", handleEnterKey);
-
-  return () => {
-    window.removeEventListener("keydown", handleEnterKey);
-  };
-
-}, [selectedSeats, vehicle]);
+    return () => window.removeEventListener("keydown", handleEnterKey);
+  }, [selectedSeats, vehicle]);
 
   const handleSeatSelection = (seat) => {
     setSelectedSeats((prev) => {
@@ -92,7 +90,7 @@ const NanyukiMombasa = () => {
     });
   };
 
-  const handleDone = () => {
+  const handleDone = async () => {
     if (selectedSeats.length === 0) {
       alert("Please select at least one seat");
       return;
@@ -103,13 +101,34 @@ const NanyukiMombasa = () => {
       return;
     }
 
-    navigate("/mpesa", {
-      state: {
-        seats: selectedSeats,
-        from: location.pathname,
-        vehicle: vehicle.number_plate,
-      },
-    });
+    try {
+      const latest = await fetch(
+        `http://localhost:5000/api/paid_seats/${vehicle.number_plate}`
+      );
+
+      const latestPaidSeats = await latest.json();
+
+      const alreadyBooked = selectedSeats.some((seat) =>
+        latestPaidSeats.includes(seat)
+      );
+
+      if (alreadyBooked) {
+        alert("One or more selected seats were just booked. Please choose another seat.");
+        loadSeats();
+        return;
+      }
+
+      navigate("/mpesa", {
+        state: {
+          seats: selectedSeats,
+          from: location.pathname,
+          vehicle: vehicle.number_plate,
+        },
+      });
+    } catch (err) {
+      console.log(err);
+      alert("Unable to verify seats. Please try again.");
+    }
   };
 
   const seatStyle = (seat) => {
@@ -120,11 +139,7 @@ const NanyukiMombasa = () => {
       width: "55px",
       height: "55px",
       borderRadius: "14px",
-      background: isPaid
-        ? "grey"
-        : isSelected
-        ? "limegreen"
-        : "#00bfff",
+      background: isPaid ? "grey" : isSelected ? "limegreen" : "#00bfff",
       cursor: isPaid ? "not-allowed" : "pointer",
       display: "flex",
       alignItems: "center",
@@ -140,24 +155,26 @@ const NanyukiMombasa = () => {
   return (
     <div className="min-vh-100 py-4">
       <div className="container d-flex flex-column align-items-center">
+
         <b className="btn bg-info text-dark mb-3">
           Nanyuki-Mombasa
         </b>
 
         <b>Vehicle: </b>
-<p className="text-info text-center btn" id="numberplate">
-  <b>
-    {vehicle
-      ? `${vehicle.number_plate} - Driver: ${vehicle.driver_name}`
-      : "Vehicle being uploaded..."}
-  </b>
-</p>
+
+        <p className="text-info text-center btn" id="numberplate">
+          <b>
+            {vehicle
+              ? `${vehicle.number_plate} — ${vehicle.driver_name}`
+              : "Vehicle being uploaded..."}
+          </b>
+        </p>
+
         <p className="text-dark fw-bold">
           <b>{remainingSeats} Seats Remaining</b>
         </p>
 
-        <div
-          className="p-4 mt-3"
+        <div className="p-4 mt-3"
           style={{
             background: "#1c1c1c",
             borderRadius: "25px",
@@ -165,38 +182,32 @@ const NanyukiMombasa = () => {
             width: "350px",
           }}
         >
+          {/* FRONT */}
           <div className="d-flex justify-content-center align-items-center mb-4">
-            <div onClick={() => handleSeatSelection("s0")} style={seatStyle("s0")}>
-              0
-            </div>
-
-            <div onClick={() => handleSeatSelection("s1")} style={seatStyle("s1")}>
-              1
-            </div>
+            <div onClick={() => handleSeatSelection("s0")} style={seatStyle("s0")}>0</div>
+            <div onClick={() => handleSeatSelection("s1")} style={seatStyle("s1")}>1</div>
 
             <div style={{ width: "55px" }} />
 
-            <div
-              style={{
-                width: "55px",
-                height: "55px",
-                borderRadius: "14px",
-                background: "#444",
-                color: "blue",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "bold",
-                border: "2px solid white",
-              }}
-            >
+            <div style={{
+              width: "55px",
+              height: "55px",
+              borderRadius: "14px",
+              background: "#444",
+              color: "blue",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: "bold",
+              border: "2px solid white",
+            }}>
               D
             </div>
           </div>
 
+          {/* SEATS */}
           {seatRows.slice(1).map((row, rowIndex) => (
-            <div
-              key={rowIndex}
+            <div key={rowIndex}
               className="d-flex align-items-center mb-3"
               style={{
                 gap: "10px",
@@ -209,12 +220,7 @@ const NanyukiMombasa = () => {
             >
               {row.map((seat, i) => {
                 if (seat === "aisle") {
-                  return (
-                    <div
-                      key={`aisle-${rowIndex}-${i}`}
-                      style={{ width: "40px" }}
-                    />
-                  );
+                  return <div key={i} style={{ width: "40px" }} />;
                 }
 
                 return (
@@ -234,6 +240,7 @@ const NanyukiMombasa = () => {
           ))}
         </div>
 
+        {/* LEGEND */}
         <div className="d-flex gap-4 mt-4 flex-wrap text-white">
           <div className="d-flex align-items-center gap-2">
             <div style={{ width: 20, height: 20, background: "#00bfff", borderRadius: 4 }} />
@@ -253,7 +260,7 @@ const NanyukiMombasa = () => {
 
         <input
           type="submit"
-          value={"DONE"}
+          value="DONE"
           onClick={handleDone}
           className="btn bg-info text-dark mt-4 px-5"
         />
