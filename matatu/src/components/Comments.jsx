@@ -10,280 +10,150 @@ const Comments = () => {
   }
 
   const currentUser = storedUser?.email || "guest";
-  const isAdmin =
-    storedUser?.email === "collinsdmwas@gmail.com";
+  const isAdmin = storedUser?.email === "collinsdmwas@gmail.com";
 
-  const [name, setName] = useState(
-    storedUser?.username || ""
-  );
+  const [name, setName] = useState(storedUser?.username || "");
   const [comment, setComment] = useState("");
-
-  const [comments, setComments] = useState(() => {
-    const saved = localStorage.getItem("comments");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem("notifications");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [showNotifications, setShowNotifications] =
-    useState(false);
+  const [comments, setComments] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const notifRef = useRef(null);
 
-  // SAVE COMMENTS
+  // ================= LOAD COMMENTS =================
   useEffect(() => {
-    localStorage.setItem(
-      "comments",
-      JSON.stringify(comments)
-    );
-  }, [comments]);
+    fetch("http://localhost:5000/api/comments")
+      .then((res) => res.json())
+      .then((data) => setComments(data))
+      .catch((err) => console.log(err));
+  }, []);
 
-  // SAVE NOTIFICATIONS
+  // ================= LOAD NOTIFICATIONS =================
   useEffect(() => {
-    localStorage.setItem(
-      "notifications",
-      JSON.stringify(notifications)
-    );
-  }, [notifications]);
+    if (!currentUser) return;
 
-  // CLOSE NOTIFICATIONS ON OUTSIDE CLICK
+    fetch(`http://localhost:5000/api/notifications/${currentUser}`)
+      .then((res) => res.json())
+      .then((data) => setNotifications(data))
+      .catch((err) => console.log(err));
+  }, [currentUser]);
+
+  // ================= CLOSE NOTIFICATIONS =================
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        notifRef.current &&
-        !notifRef.current.contains(event.target)
-      ) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
         setShowNotifications(false);
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () =>
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ FIXED: profile picture sync (ONLY ONCE, CLEAN)
-  useEffect(() => {
-    if (!storedUser?.email || !storedUser?.profilePic)
-      return;
-
-    setComments((prev) =>
-      prev.map((item) =>
-        item.owner === storedUser.email
-          ? {
-              ...item,
-              imageUrl: storedUser.profilePic,
-            }
-          : item
-      )
-    );
-  }, [
-    storedUser?.email,
-    storedUser?.profilePic,
-  ]);
-
-  // TIME FORMAT
+  // ================= TIME FORMAT =================
   const timeAgo = (timestamp) => {
-    const seconds = Math.floor(
-      (Date.now() - timestamp) / 1000
-    );
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
     if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600)
-      return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400)
-      return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     return `${Math.floor(seconds / 86400)}d ago`;
   };
 
-  // CREATE COMMENT
+  // ================= CREATE COMMENT =================
   const handleSubmit = () => {
     if (!name.trim() || !comment.trim()) {
       alert("Please fill all fields");
       return;
     }
 
-    const newComment = {
-      id: Date.now(),
-      name,
-      comment,
-      createdAt: Date.now(),
-      likes: [],
-      owner: currentUser,
-      imageUrl: storedUser?.profilePic || "",
-    };
-
-    setComments((prev) => [newComment, ...prev]);
-    setComment("");
-  };
-
-  // LIKE + NOTIFICATION
-  const handleLike = (id) => {
-    let notification = null;
-
-    setComments((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
-
-        if (item.likes?.includes(currentUser))
-          return item;
-
-        const updatedLikes = [
-          ...(item.likes || []),
-          currentUser,
-        ];
-
-        if (item.owner !== currentUser) {
-          notification = {
-            id: `${Date.now()}-${id}`,
-            to: item.owner,
-            from: currentUser,
-            fromName:
-              storedUser?.username || "Someone",
-            fromProfilePic:
-              storedUser?.profilePic || "",
-            message: `${
-              storedUser?.username || "Someone"
-            } liked your comment`,
-            createdAt: Date.now(),
-            read: false,
-          };
-        }
-
-        return {
-          ...item,
-          likes: updatedLikes,
-        };
+    fetch("http://localhost:5000/api/comments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        email: currentUser,
+        comment,
+        imageUrl: storedUser?.profilePic || "",
+      }),
+    })
+      .then((res) => res.json())
+      .then(() => {
+        setComment("");
+        return fetch("http://localhost:5000/api/comments");
       })
-    );
-
-    if (notification) {
-      setNotifications((prev) => {
-        const exists = prev.some(
-          (n) =>
-            n.to === notification.to &&
-            n.from === notification.from &&
-            n.message === notification.message
-        );
-
-        if (exists) return prev;
-
-        return [notification, ...prev];
-      });
-    }
+      .then((res) => res.json())
+      .then((data) => setComments(data))
+      .catch((err) => console.log(err));
   };
 
-  // DELETE
+  // ================= LIKE (BACKEND FIXED) =================
+  const handleLike = (comment) => {
+    fetch("http://localhost:5000/api/like", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        comment_id: comment.id,
+        from_email: currentUser,
+        to_email: comment.email,
+      }),
+    })
+      .then(() => fetch("http://localhost:5000/api/comments"))
+      .then((res) => res.json())
+      .then((data) => setComments(data))
+      .catch((err) => console.log(err));
+  };
+
+  // ================= DELETE COMMENT =================
   const handleDelete = (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete?"
-    );
-    if (confirmed) {
-      setComments((prev) =>
-        prev.filter((item) => item.id !== id)
-      );
-    }
-  };
+    const confirmed = window.confirm("Are you sure you want to delete?");
+    if (!confirmed) return;
 
-  // FILTER NOTIFICATIONS (WORKING VERSION)
-  const userNotifications = notifications.filter(
-    (n) => n.to === currentUser
-  );
-
-  const unreadCount = userNotifications.filter(
-    (n) => !n.read
-  ).length;
-
-  const toggleNotifications = () => {
-    setShowNotifications(!showNotifications);
-
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.to === currentUser
-          ? { ...n, read: true }
-          : n
+    fetch(`http://localhost:5000/api/comments/${id}`, {
+      method: "DELETE",
+    })
+      .then(() =>
+        setComments((prev) => prev.filter((item) => item.id !== id))
       )
-    );
+      .catch((err) => console.log(err));
   };
 
   return (
     <div className="container mt-5">
 
-      {/* NOTIFICATIONS */}
-      <div
-        ref={notifRef}
-        style={{
-          position: "relative",
-          marginBottom: 20,
-        }}
-      >
+      {/* NOTIFICATIONS ICON (simple UI) */}
+      <div ref={notifRef} className="mb-3">
         <button
-          onClick={toggleNotifications}
           className="btn btn-dark"
+          onClick={() => setShowNotifications(!showNotifications)}
         >
-          🔔 {unreadCount > 0 ? unreadCount : ""}
+          🔔 {notifications.length}
         </button>
 
         {showNotifications && (
           <div
             style={{
               position: "absolute",
-              right: 0,
-              top: 40,
-              background: "black",
+              background: "#222",
               color: "white",
               padding: 10,
+              marginTop: 10,
               borderRadius: 10,
-              width: 260,
-              zIndex: 9999,
+              width: 250,
+              zIndex: 999,
             }}
           >
-            {userNotifications.length === 0 ? (
+            {notifications.length === 0 ? (
               <p>No notifications</p>
             ) : (
-              userNotifications.map((n) => (
-                <div
-                  key={n.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    marginBottom: 8,
-                    fontSize: 12,
-                  }}
-                >
-                  {n.fromProfilePic ? (
-                    <img
-                      src={n.fromProfilePic}
-                      alt="user"
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        background: "#555",
-                      }}
-                    />
-                  )}
-
-                  <span>{n.message}</span>
+              notifications.map((n) => (
+                <div key={n.id} style={{ marginBottom: 8 }}>
+                  {n.message}
                 </div>
               ))
             )}
@@ -304,31 +174,20 @@ const Comments = () => {
           className="form-control mb-2"
           rows="3"
           value={comment}
-          onChange={(e) =>
-            setComment(e.target.value)
-          }
+          onChange={(e) => setComment(e.target.value)}
         />
 
-        <button
-          className="btn btn-primary"
-          onClick={handleSubmit}
-        >
+        <button className="btn btn-primary" onClick={handleSubmit}>
           Post
         </button>
       </div>
 
       {/* COMMENTS */}
       {comments.map((item) => {
-        const isLiked = item.likes?.includes(
-          currentUser
-        );
+        const isLiked = item.likes?.includes(currentUser);
 
         return (
-          <div
-            key={item.id}
-            className="card p-3 mb-3"
-            id="usercomments"
-          >
+          <div key={item.id} className="card p-3 mb-3" id="usercomments">
             <div className="d-flex align-items-center mb-2 text-info">
               {item.imageUrl ? (
                 <img
@@ -356,18 +215,11 @@ const Comments = () => {
               <b>{item.name}</b>
             </div>
 
-            <p className="mb-2">
-              {item.comment}
-            </p>
+            <p className="mb-2">{item.comment}</p>
 
             <div className="d-flex align-items-center gap-3">
               <button
-                onClick={() =>
-                  handleLike(item.id)
-                }
-                disabled={item.likes?.includes(
-                  currentUser
-                )}
+                onClick={() => handleLike(item)}
                 style={{
                   border: "none",
                   background: "transparent",
@@ -375,13 +227,7 @@ const Comments = () => {
                   cursor: "pointer",
                 }}
               >
-                <span
-                  style={{
-                    color: isLiked
-                      ? "red"
-                      : "#999",
-                  }}
-                >
+                <span style={{ color: isLiked ? "red" : "#999" }}>
                   {isLiked ? "❤️" : "🤍"}
                 </span>{" "}
                 {item.likes?.length || 0}
@@ -394,9 +240,7 @@ const Comments = () => {
 
             {isAdmin && (
               <button
-                onClick={() =>
-                  handleDelete(item.id)
-                }
+                onClick={() => handleDelete(item.id)}
                 style={{
                   border: "none",
                   background: "transparent",

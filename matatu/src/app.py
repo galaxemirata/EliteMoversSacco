@@ -555,6 +555,131 @@ def paid_seats(number_plate):
 
     return jsonify(seats)
 
+@app.route("/api/comments", methods=["GET"])
+def get_comments():
+    conn = get_db()
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+
+    cursor.execute("SELECT * FROM comments ORDER BY createdAt DESC")
+    data = cursor.fetchall()
+
+    return jsonify(data)
+
+@app.route("/api/comments", methods=["POST"])
+def add_comment():
+    data = request.get_json()
+
+    name = data["name"]
+    email = data["email"]
+    comment = data["comment"]
+    imageUrl = data.get("imageUrl", "")
+    createdAt = int(datetime.datetime.now().timestamp() * 1000)
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    sql = """
+        INSERT INTO comments (name, email, comment, imageUrl, createdAt)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+
+    cursor.execute(sql, (name, email, comment, imageUrl, createdAt))
+    conn.commit()
+
+    return jsonify({"message": "Comment added"})
+
+@app.route("/api/comments/<int:id>", methods=["DELETE"])
+def delete_comment(id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM comments WHERE id=%s", (id,))
+    conn.commit()
+
+    return jsonify({"message": "Deleted"})
+
+@app.route("/api/like", methods=["POST"])
+def like_comment():
+    data = request.get_json()
+
+    comment_id = data["comment_id"]
+    from_email = data["from_email"]
+    to_email = data["to_email"]
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # prevent duplicate likes
+    cursor.execute(
+        "SELECT * FROM likes WHERE comment_id=%s AND user_email=%s",
+        (comment_id, from_email)
+    )
+
+    if cursor.fetchone():
+        return jsonify({"message": "Already liked"}), 200
+
+    cursor.execute(
+        "INSERT INTO likes (comment_id, user_email, createdAt) VALUES (%s, %s, %s)",
+        (comment_id, from_email, int(datetime.datetime.now().timestamp() * 1000))
+    )
+
+    # create notification
+    if from_email != to_email:
+        cursor.execute(
+            "INSERT INTO notifications (to_email, from_email, message, createdAt) VALUES (%s, %s, %s, %s)",
+            (
+                to_email,
+                from_email,
+                "Someone liked your comment",
+                int(datetime.datetime.now().timestamp() * 1000),
+            ),
+        )
+
+    conn.commit()
+
+    return jsonify({"message": "liked"})
+
+@app.route("/api/likes/<int:comment_id>", methods=["GET"])
+def get_likes(comment_id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT user_email FROM likes WHERE comment_id=%s",
+        (comment_id,)
+    )
+
+    data = cursor.fetchall()
+
+    return jsonify([row["user_email"] for row in data])
+
+@app.route("/api/notifications/<email>", methods=["GET"])
+def get_notifications(email):
+    conn = get_db()
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+
+    cursor.execute(
+        "SELECT * FROM notifications WHERE to_email=%s ORDER BY createdAt DESC",
+        (email,)
+    )
+
+    return jsonify(cursor.fetchall())
+
+
+@app.route("/api/notifications/read/<int:id>", methods=["PUT"])
+def mark_read(id):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE notifications SET read_status=TRUE WHERE id=%s",
+        (id,)
+    )
+
+    conn.commit()
+
+    return jsonify({"message": "updated"})
+
 
 # RUN APP
 
