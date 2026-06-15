@@ -277,6 +277,8 @@ function App() {
             onChange={changeProfilePicture}
           />
 
+          
+
         </nav>
 
         <br /><br /><br />

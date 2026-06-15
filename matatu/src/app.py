@@ -11,7 +11,9 @@ app = Flask(__name__)
 CORS(app)
 
 
-# SIGNUP
+
+# SIGNUP API
+# ==============================
 @app.route("/api/signup", methods=["POST"])
 def signup():
 
@@ -19,34 +21,58 @@ def signup():
     email = request.form["email"]
     password = request.form["password"]
     phone = request.form["phone"]
-    profilePic = request.form["profilePic"]
+
+    # File upload
+    profilePic = request.files["profilePic"]
 
     # ==========================
-    # PHONE VALIDATION (FIX ONLY)
+    # PHONE VALIDATION
     # ==========================
     if not phone.isdigit():
         return jsonify({
             "error": "Phone number must contain digits only"
         }), 400
-    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
+
+    connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu"
+    )
 
     cursor = connection.cursor()
 
     sql = """
-    INSERT INTO signup(username,password,email,phone,profilePic)
-    VALUES(%s,%s,%s,%s,%s)
+        INSERT INTO signup(
+            username,
+            password,
+            email,
+            phone,
+            profilePic
+        )
+        VALUES(%s,%s,%s,%s,%s)
     """
 
     cursor.execute(
         sql,
-        (username, password, email, phone, profilePic)
+        (
+            username,
+            password,
+            email,
+            phone,
+            profilePic.filename
+        )
     )
 
     connection.commit()
 
+    cursor.close()
+    connection.close()
+
     return jsonify({
         "message": "Thankyou for joining"
     })
+
 
 # ==============================
 # SIGNIN API
@@ -59,21 +85,46 @@ def signin():
     email = data.get("email")
     password = data.get("password")
 
-    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
+    connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu"
+    )
 
-    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    cursor = connection.cursor(
+        pymysql.cursors.DictCursor
+    )
 
-    sql = "SELECT * FROM signup WHERE email=%s AND password=%s"
+    sql = """
+        SELECT *
+        FROM signup
+        WHERE email=%s AND password=%s
+    """
 
-    cursor.execute(sql, (email, password))
+    cursor.execute(
+        sql,
+        (email, password)
+    )
 
     if cursor.rowcount == 0:
-        return jsonify({"message": "login failed"})
-    else:
+
+        cursor.close()
+        connection.close()
+
         return jsonify({
-            "message": "login successful",
-            "user": cursor.fetchone()
+            "message": "login failed"
         })
+
+    user = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify({
+        "message": "login successful",
+        "user": user
+    })
 
 
 
@@ -480,7 +531,13 @@ def remove_vehicle(vehicle_id):
 @app.route('/api/admin/bookings', methods=['GET'])
 def admin_bookings():
 
-    connection=pymysql.connect(user="collins",host="mysql-collins.alwaysdata.net",password="modcom1234",database="collins_matatu")
+    connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
     cursor = connection.cursor()
 
@@ -555,77 +612,135 @@ def paid_seats(number_plate):
 
     return jsonify(seats)
 
+from flask import Flask, request, jsonify
+import pymysql
+import datetime
+from flask_cors import CORS
+
+
+
+
+def get_connection():
+    return pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )
+
+
+# ================= GET COMMENTS =================
 @app.route("/api/comments", methods=["GET"])
 def get_comments():
-    conn = get_db()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    connection = get_connection()
+    cursor = connection.cursor()
 
     cursor.execute("SELECT * FROM comments ORDER BY createdAt DESC")
     data = cursor.fetchall()
 
+    cursor.close()
+    connection.close()
+
+    # ensure frontend safety
+    for item in data:
+        item["likes"] = item["likes"] or []
+
     return jsonify(data)
 
+
+# ================= ADD COMMENT =================
 @app.route("/api/comments", methods=["POST"])
 def add_comment():
-    data = request.get_json()
+    connection = get_connection()
+    cursor = connection.cursor()
 
-    name = data["name"]
-    email = data["email"]
-    comment = data["comment"]
-    imageUrl = data.get("imageUrl", "")
-    createdAt = int(datetime.datetime.now().timestamp() * 1000)
+    try:
+        data = request.get_json()
 
-    conn = get_db()
-    cursor = conn.cursor()
+        name = data.get("name", "")
+        email = data.get("email", "")
+        comment = data.get("comment", "")
+        imageUrl = data.get("imageUrl", "")
 
-    sql = """
-        INSERT INTO comments (name, email, comment, imageUrl, createdAt)
-        VALUES (%s, %s, %s, %s, %s)
-    """
+        createdAt = int(datetime.datetime.now().timestamp() * 1000)
 
-    cursor.execute(sql, (name, email, comment, imageUrl, createdAt))
-    conn.commit()
+        sql = """
+            INSERT INTO comments (name, email, comment, imageUrl, createdAt, likes)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
 
-    return jsonify({"message": "Comment added"})
+        cursor.execute(sql, (
+            name,
+            email,
+            comment,
+            imageUrl,
+            createdAt,
+            "[]"   # default empty likes list
+        ))
+
+        connection.commit()
+
+        return jsonify({"message": "Comment added"})
+
+    except Exception as e:
+        print("COMMENT ERROR:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
+    
 
 @app.route("/api/comments/<int:id>", methods=["DELETE"])
 def delete_comment(id):
-    conn = get_db()
-    cursor = conn.cursor()
+    connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )    
 
+    cursor = connection.cursor()    
     cursor.execute("DELETE FROM comments WHERE id=%s", (id,))
-    conn.commit()
+    connection.commit()
 
     return jsonify({"message": "Deleted"})
 
 @app.route("/api/like", methods=["POST"])
 def like_comment():
-    data = request.get_json()
+        connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )  
+        data = request.get_json()
 
-    comment_id = data["comment_id"]
-    from_email = data["from_email"]
-    to_email = data["to_email"]
+        comment_id = data["comment_id"]
+        from_email = data["from_email"]
+        to_email = data["to_email"]
 
-    conn = get_db()
-    cursor = conn.cursor()
+        cursor = connection.cursor()
 
     # prevent duplicate likes
-    cursor.execute(
+        cursor.execute(
         "SELECT * FROM likes WHERE comment_id=%s AND user_email=%s",
         (comment_id, from_email)
     )
+        if cursor.fetchone():
+         return jsonify({"message": "Already liked"}), 200
 
-    if cursor.fetchone():
-        return jsonify({"message": "Already liked"}), 200
-
-    cursor.execute(
+        cursor.execute(
         "INSERT INTO likes (comment_id, user_email, createdAt) VALUES (%s, %s, %s)",
         (comment_id, from_email, int(datetime.datetime.now().timestamp() * 1000))
     )
 
     # create notification
-    if from_email != to_email:
-        cursor.execute(
+        if from_email != to_email:
+         cursor.execute(
             "INSERT INTO notifications (to_email, from_email, message, createdAt) VALUES (%s, %s, %s, %s)",
             (
                 to_email,
@@ -635,52 +750,69 @@ def like_comment():
             ),
         )
 
-    conn.commit()
+        connection.commit()
 
-    return jsonify({"message": "liked"})
+        return jsonify({"message": "liked"})
 
 @app.route("/api/likes/<int:comment_id>", methods=["GET"])
 def get_likes(comment_id):
-    conn = get_db()
-    cursor = conn.cursor()
+        connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
-    cursor.execute(
+        cursor = connection.cursor()
+        cursor.execute(
         "SELECT user_email FROM likes WHERE comment_id=%s",
         (comment_id,)
     )
 
-    data = cursor.fetchall()
+        data = cursor.fetchall()
 
-    return jsonify([row["user_email"] for row in data])
+        return jsonify([row["user_email"] for row in data])
 
 @app.route("/api/notifications/<email>", methods=["GET"])
 def get_notifications(email):
-    conn = get_db()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+        connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
-    cursor.execute(
+        cursor = connection.cursor()
+
+        cursor.execute(
         "SELECT * FROM notifications WHERE to_email=%s ORDER BY createdAt DESC",
         (email,)
     )
 
-    return jsonify(cursor.fetchall())
+        return jsonify(cursor.fetchall())
 
 
 @app.route("/api/notifications/read/<int:id>", methods=["PUT"])
 def mark_read(id):
-    conn = get_db()
-    cursor = conn.cursor()
-
+    connection = pymysql.connect(
+        user="collins",
+        host="mysql-collins.alwaysdata.net",
+        password="modcom1234",
+        database="collins_matatu",
+        cursorclass=pymysql.cursors.DictCursor
+    )
+    cursor = connection.cursor()
     cursor.execute(
         "UPDATE notifications SET read_status=TRUE WHERE id=%s",
         (id,)
     )
 
-    conn.commit()
-
+    connection.commit()
     return jsonify({"message": "updated"})
 
 
 # RUN APP
 
-# app.run(debug=True)
+app.run(debug=True)

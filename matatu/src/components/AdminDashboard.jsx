@@ -4,7 +4,7 @@ const AdminDashboard = () => {
 
   const [bookings, setBookings] = useState([])
   const [vehicles, setVehicles] = useState([])
-
+// form entries
   const [numberPlate, setNumberPlate] = useState("")
   const [driverName, setDriverName] = useState("")
   const [routeName, setRouteName] = useState("")
