@@ -89,7 +89,7 @@ const Comments = () => {
       {/* FORM */}
       <div className="card p-3 mb-4">
         <input
-          className="form-control mb-2"
+          className="form-control mb-2" id="commentownername"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name"
@@ -102,7 +102,7 @@ const Comments = () => {
           placeholder="Write comment..."
         />
 
-        <button className="btn btn-primary" onClick={handleSubmit}>
+        <button className="btn btn-info" onClick={handleSubmit}>
           Post
         </button>
       </div>
@@ -116,19 +116,32 @@ const Comments = () => {
         const isLiked = likes.includes(currentUser);
 
         return (
-          <div key={item.id} className="card p-3 mb-3">
+          <div key={item.id} className="card p-3 mb-3" id="usercomments">
 
-            <b>{item.name}</b>
-            <p>{item.comment}</p>
+<div style={{ display: "flex", gap: "12px" }}>
+  <img
+    src={
+      item.imageUrl ||
+      "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+    }
+    alt="profile"
+    style={{
+      width: "50px",
+      height: "50px",
+      borderRadius: "50%",
+      objectFit: "cover",
+    }}
+  />
 
-            <button onClick={() => handleLike(item)}>
-              <span style={{ color: isLiked ? "red" : "#999" }}>
-                {isLiked ? "❤️" : "🤍"}
-              </span>{" "}
-              {likes.length}
-            </button>
+  <div>
+    <b id="commentowner">@{item.name}</b>
+    <p style={{ margin: 0 }}>{item.comment}</p>
+  </div>
+</div>
 
-            <small>{timeAgo(item.createdAt)}</small>
+
+
+            <small className="text-start">{timeAgo(item.createdAt)}</small>
 
             {isAdmin && (
               <button onClick={() => handleDelete(item.id)} style={{ color: "red" }}>

@@ -22,7 +22,7 @@ def signup():
     password = request.form["password"]
     phone = request.form["phone"]
 
-    # File upload
+    # Receive Base64 image string
     profilePic = request.files["profilePic"]
 
     # ==========================
@@ -60,7 +60,7 @@ def signup():
             password,
             email,
             phone,
-            profilePic.filename
+            profilePic
         )
     )
 
@@ -74,9 +74,7 @@ def signup():
     })
 
 
-# ==============================
-# SIGNIN API
-# ==============================
+
 @app.route("/api/signin", methods=["POST"])
 def signin():
 
@@ -634,7 +632,7 @@ def get_connection():
 @app.route("/api/comments", methods=["GET"])
 def get_comments():
     connection = get_connection()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     cursor.execute("SELECT * FROM comments ORDER BY createdAt DESC")
     data = cursor.fetchall()
@@ -642,12 +640,14 @@ def get_comments():
     cursor.close()
     connection.close()
 
-    # ensure frontend safety
     for item in data:
-        item["likes"] = item["likes"] or []
+        # convert likes safely
+        try:
+            item["likes"] = json.loads(item["likes"]) if item["likes"] else []
+        except:
+            item["likes"] = []
 
     return jsonify(data)
-
 
 # ================= ADD COMMENT =================
 @app.route("/api/comments", methods=["POST"])
@@ -661,7 +661,7 @@ def add_comment():
         name = data.get("name", "")
         email = data.get("email", "")
         comment = data.get("comment", "")
-        imageUrl = data.get("imageUrl", "")
+        imageUrl = data.get("imageUrl", "")  # ✅ profile pic
 
         createdAt = int(datetime.datetime.now().timestamp() * 1000)
 
@@ -676,7 +676,7 @@ def add_comment():
             comment,
             imageUrl,
             createdAt,
-            "[]"   # default empty likes list
+            json.dumps([])   # ✅ better than "[]"
         ))
 
         connection.commit()
@@ -684,7 +684,6 @@ def add_comment():
         return jsonify({"message": "Comment added"})
 
     except Exception as e:
-        print("COMMENT ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
     finally:

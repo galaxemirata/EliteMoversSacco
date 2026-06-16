@@ -208,7 +208,7 @@ const AdminDashboard = () => {
 
     <div className='container mt-4'>
 
-      <h1><b>ADMIN</b></h1>
+      <h1><b>ADMIN</b></h1> {currentAdminEmail}
 
       <div className="card p-4" id='addvehicle'>
 

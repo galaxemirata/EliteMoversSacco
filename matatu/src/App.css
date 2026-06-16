@@ -305,3 +305,11 @@
     margin-bottom: 10px;
   }
 }
+
+/* comment */
+#commentowner{
+  color: cyan;
+}
+#commentownername{
+  color: deeppink;
+}
